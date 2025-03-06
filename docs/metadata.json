@@ -1,5 +1,5 @@
 {
-    "name": "{Your Package}",
-    "description": "{package description}",
+    "name": "Mediapicker",
+    "description": "Allow for file uploads from a persistent storage",
     "version": "1"
 }

@@ -1,17 +1,17 @@
 {
-    "name": "javaabu/{your-package}",
-    "description": "{package description}",
-    "homepage": "https://github.com/Javaabu/{your-package}",
+    "name": "javaabu/mediapicker",
+    "description": "Allow for file uploads from a persistent storage",
+    "homepage": "https://github.com/Javaabu/mediapicker",
     "license": "MIT",
     "keywords": [
         "javaabu",
         "laravel",
-        "{your_package}"
+        "mediapicker"
     ],
     "authors": [
         {
-            "name": "{author_name}",
-            "email": "{author_email}",
+            "name": "FlameXode",
+            "email": "wovencoast14782@techie.com",
             "role": "Developer"
         }
     ],
@@ -26,12 +26,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Javaabu\\{YourPackage}\\": "src/"
+            "Javaabu\\Mediapicker\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Javaabu\\{YourPackage}\\Tests\\": "tests/"
+            "Javaabu\\Mediapicker\\Tests\\": "tests/"
         }
     },
     "extra": {
@@ -40,7 +40,7 @@
         },
         "laravel": {
             "providers": [
-                "Javaabu\\{YourPackage}\\{YourPackage}ServiceProvider"
+                "Javaabu\\Mediapicker\\MediapickerServiceProvider"
             ]
         }
     },

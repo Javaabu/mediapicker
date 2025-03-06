@@ -1,8 +1,8 @@
 <?php
 
-namespace Javaabu\{YourPackage}\Tests\Feature;
+namespace Javaabu\Mediapicker\Tests\Feature;
 
-use Javaabu\{YourPackage}\Tests\TestCase;
+use Javaabu\Mediapicker\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
 class ExampleTest extends TestCase
