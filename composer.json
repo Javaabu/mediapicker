@@ -17,14 +17,14 @@
     ],
     "require": {
         "php": "^8.2",
-        "illuminate/support": "^10.0 || ^11.44 || ^12.0",
+        "illuminate/support": "^10.0 || ^11.0 || ^12.0",
         "spatie/laravel-medialibrary": "^11.12",
         "javaabu/helpers": "^1.61",
         "javaabu/activitylog": "^1.4"
     },
     "require-dev": {
         "laravel/pint": "^1.14",
-        "orchestra/testbench": "^8.0 || ^9.0 || ^10.0",
+        "orchestra/testbench": "^8.0 || ^9.13 || ^10.0",
         "phpunit/phpunit": "^10.5 || ^11.5.3"
     },
     "autoload": {
