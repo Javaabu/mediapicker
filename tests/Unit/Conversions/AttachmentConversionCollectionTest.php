@@ -17,21 +17,7 @@ class AttachmentConversionCollectionTest extends TestCase
     #[Test]
     public function it_can_create_an_attachment_conversion_for_an_attachment(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-
-        $user->addMedia($this->getTestJpg())
-             ->toMediaCollection('mediapicker');
-
-        $media = $user->getFirstMedia('mediapicker');
-
-        /** @var Post $post */
-        $post = Post::factory()->create();
-
-
-        $attachment = new Attachment();
-        $attachment->media()->associate($media);
-        $attachment->model()->associate($post);
+        $attachment = $this->getAttachment();
 
         $conversion_collection = AttachmentConversionCollection::createForAttachment($attachment);
 

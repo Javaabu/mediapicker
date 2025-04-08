@@ -35,16 +35,17 @@ trait InteractsWithAttachments
     /** @var array */
     protected $unAttachedAttachmentItems = [];
 
-    public static function bootHasAttachmentsTrait()
+
+    public static function bootInteractsWithAttachments(): void
     {
-        static::deleting(function (HasAttachments $entity) {
-            if (in_array(SoftDeletes::class, class_uses_recursive($entity))) {
-                if (! $entity->forceDeleting) {
+        static::deleting(function (HasAttachments $model) {
+            if (in_array(SoftDeletes::class, class_uses_recursive($model))) {
+                if (! $model->forceDeleting) {
                     return;
                 }
             }
 
-            $entity->attachments()->get()->each->delete();
+            $model->attachments()->cursor()->each(fn (Attachment $attachment) => $attachment->delete());
         });
     }
 

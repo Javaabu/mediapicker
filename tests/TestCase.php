@@ -2,16 +2,20 @@
 
 namespace Javaabu\Mediapicker\Tests;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Javaabu\Helpers\HelpersServiceProvider;
+use Javaabu\Mediapicker\Models\Attachment;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\Post;
+use Javaabu\Mediapicker\Tests\TestSupport\Models\User;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Javaabu\Mediapicker\MediapickerServiceProvider;
 use Javaabu\Mediapicker\Tests\TestSupport\Providers\TestServiceProvider;
 use Javaabu\Activitylog\ActivitylogServiceProvider;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\MediaLibrary\MediaLibraryServiceProvider;
 
 abstract class TestCase extends BaseTestCase
@@ -73,6 +77,41 @@ abstract class TestCase extends BaseTestCase
         $app->bind('path.public', fn () => $this->getTempDirectory());
 
         $this->setUpMorphMap();
+    }
+
+    protected function getUserWithMedia(): User
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $user->addMedia($this->getTestJpg())
+            ->toMediaCollection('mediapicker');
+
+        return $user;
+    }
+
+    protected function getMedia(): Media
+    {
+        $user = $this->getUserWithMedia();
+
+        return $user->getFirstMedia('mediapicker');
+    }
+
+    protected function getAttachment(?Model $model = null): Attachment
+    {
+        $media = $this->getMedia();
+
+        if (! $model) {
+            $model = Post::factory()->create();
+        }
+
+        $attachment = new Attachment();
+        $attachment->collection_name = 'default';
+        $attachment->media()->associate($media);
+        $attachment->model()->associate($model);
+        $attachment->save();
+
+        return $attachment;
     }
 
     protected function setUpTempTestFiles()
