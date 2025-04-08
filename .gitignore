@@ -6,3 +6,5 @@ coverage
 .php-cs-fixer.cache
 .idea
 clover.xml
+tests/TestSupport/temp
+tests/temp
