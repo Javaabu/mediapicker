@@ -263,4 +263,5 @@ class MediaAdderTest extends TestCase
             'collection_name' => 'test'
         ]);
     }
+
 }
