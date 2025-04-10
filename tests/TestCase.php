@@ -85,6 +85,7 @@ abstract class TestCase extends BaseTestCase
         $user = User::factory()->create();
 
         $user->addMedia($this->getTestJpg())
+            ->preservingOriginal()
             ->toMediaCollection('mediapicker');
 
         return $user;
@@ -97,12 +98,17 @@ abstract class TestCase extends BaseTestCase
         return $user->getFirstMedia('mediapicker');
     }
 
+    protected function getModel(): Post
+    {
+        return Post::factory()->create();
+    }
+
     protected function getAttachment(?Model $model = null): Attachment
     {
         $media = $this->getMedia();
 
         if (! $model) {
-            $model = Post::factory()->create();
+            $model = $this->getModel();
         }
 
         $attachment = new Attachment();
