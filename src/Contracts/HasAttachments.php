@@ -41,9 +41,9 @@ interface HasAttachments
      * Add multiple medias from a request by keys.
      *
      * @param array<string> $keys
-     * @return array<MediaAdder>
+     * @return Collection<MediaAdder>
      */
-    public function addMultipleAttachmentsFromRequest(array $keys): array;
+    public function addMultipleAttachmentsFromRequest(array $keys): Collection;
 
     /**
      * Determine if there is media in the given attachment collection.

@@ -3,6 +3,7 @@
 namespace Javaabu\Mediapicker;
 
 use Javaabu\Mediapicker\Contracts\Attachment;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Mediapicker
 {
@@ -15,12 +16,12 @@ class Mediapicker
     }
 
     /**
-     * @return class-string<Attachment>
+     * @return class-string<Media>
      */
-    /*public static function attachmentModel(): string
+    public static function mediaModel(): string
     {
-        return config('mediapicker.attachment_model');
-    }*/
+        return config('mediapicker.media_model');
+    }
 
     /**
      * Register the admin routes

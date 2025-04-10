@@ -6,6 +6,7 @@ use DateTimeInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Javaabu\Mediapicker\Mediapicker;
 use Spatie\MediaLibrary\MediaCollections\Models\Concerns\IsSorted;
 
 class Attachment extends Model implements \Javaabu\Mediapicker\Contracts\Attachment
@@ -17,7 +18,7 @@ class Attachment extends Model implements \Javaabu\Mediapicker\Contracts\Attachm
      */
     public function media(): BelongsTo
     {
-        return $this->belongsTo(Media::class);
+        return $this->belongsTo(Mediapicker::mediaModel());
     }
 
     /**

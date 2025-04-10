@@ -87,9 +87,9 @@ trait InteractsWithAttachments
      * Add multiple medias from a request by keys.
      *
      * @param array<string> $keys
-     * @return array<MediaAdder>
+     * @return Collection<MediaAdder>
      */
-    public function addMultipleAttachmentsFromRequest(array $keys): array
+    public function addMultipleAttachmentsFromRequest(array $keys): Collection
     {
         return app(MediaAdderFactory::class)->createMultipleFromRequest($this, $keys);
     }
