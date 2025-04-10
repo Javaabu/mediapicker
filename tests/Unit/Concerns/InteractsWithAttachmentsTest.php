@@ -60,4 +60,22 @@ class InteractsWithAttachmentsTest extends TestCase
         $this->assertEquals($post->attachments()->count(), 1);
     }
 
+    #[Test]
+    public function it_can_add_an_attachment(): void
+    {
+        /** @var Post $post */
+        $post = Post::factory()->create();
+
+        $media = $this->getMedia();
+
+        $post->addAttachment($media)
+            ->toAttachmentCollection();
+
+        $this->assertDatabaseHas('attachments', [
+            'model_type' => 'post',
+            'model_id' => $post->id,
+            'media_id' => $media->id,
+        ]);
+    }
+
 }
