@@ -6,16 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Javaabu\Mediapicker\Concerns\InteractsWithAttachments;
 use Javaabu\Mediapicker\Contracts\HasAttachments;
 use Javaabu\Mediapicker\Tests\TestSupport\Factories\PostFactory;
+use Spatie\MediaLibrary\MediaCollections\File;
 
-class Post extends Model implements HasAttachments
+class ModelWithSingleFile extends Post
 {
-    use InteractsWithAttachments;
-    use HasFactory;
-
-    protected $table = 'posts';
-
-    protected static function newFactory()
+    public function registerAttachmentCollections()
     {
-        return (new PostFactory())->setModel(static::class);
+        $this->addAttachmentCollection('test')
+            ->singleFile();
     }
 }

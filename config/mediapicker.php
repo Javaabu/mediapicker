@@ -24,4 +24,15 @@ return [
     */
 
     'attachment_model' => \Javaabu\Mediapicker\Models\Attachment::class,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Attachment Observer
+    |--------------------------------------------------------------------------
+    |
+    | Class used to observe changes to attachments
+    |
+    */
+
+    'attachment_observer' => \Javaabu\Mediapicker\Models\Observers\AttachmentObserver::class,
 ];

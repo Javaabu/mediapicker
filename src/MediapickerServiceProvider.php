@@ -7,6 +7,7 @@ use Javaabu\Mediapicker\AttachmentCollections\AttachmentRepository;
 use Javaabu\Mediapicker\Commands\AttachmentsCleanCommand;
 use Javaabu\Mediapicker\Commands\AttachmentsClearCommand;
 use Javaabu\Mediapicker\Commands\AttachmentsRegenerateCommand;
+use Javaabu\Mediapicker\Models\Observers\AttachmentObserver;
 
 class MediapickerServiceProvider extends ServiceProvider
 {
@@ -27,7 +28,9 @@ class MediapickerServiceProvider extends ServiceProvider
         }
 
         $attachmentClass = $this->getAttachmentClass();
-        //$attachmentClass::observe(new AttachmentObserver());
+        $attachmentObserverClass = config('mediapicker.attachment_observer', AttachmentObserver::class);
+
+        $attachmentClass::observe(new $attachmentObserverClass);
         // TODO
     }
 

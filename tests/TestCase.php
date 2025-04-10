@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Javaabu\Helpers\HelpersServiceProvider;
 use Javaabu\Mediapicker\Models\Attachment;
+use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithSingleFile;
+use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithUnacceptedFile;
+use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithUnacceptedMimeType;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\Post;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\User;
 use Orchestra\Testbench\TestCase as BaseTestCase;
@@ -101,6 +104,21 @@ abstract class TestCase extends BaseTestCase
     protected function getModel(): Post
     {
         return Post::factory()->create();
+    }
+
+    protected function getModelWithUnacceptedFile(): ModelWithUnacceptedFile
+    {
+        return ModelWithUnacceptedFile::factory()->create();
+    }
+
+    protected function getModelWithUnacceptedMimeType(): ModelWithUnacceptedMimeType
+    {
+        return ModelWithUnacceptedMimeType::factory()->create();
+    }
+
+    protected function getModelWithSingleFile(): ModelWithSingleFile
+    {
+        return ModelWithSingleFile::factory()->create();
     }
 
     protected function getAttachment(?Model $model = null): Attachment
