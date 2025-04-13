@@ -121,7 +121,7 @@ abstract class TestCase extends BaseTestCase
         return ModelWithSingleFile::factory()->create();
     }
 
-    protected function getAttachment(?Model $model = null): Attachment
+    protected function getAttachment(?Model $model = null, string $collection_name = 'default'): Attachment
     {
         $media = $this->getMedia();
 
@@ -130,7 +130,7 @@ abstract class TestCase extends BaseTestCase
         }
 
         $attachment = new Attachment();
-        $attachment->collection_name = 'default';
+        $attachment->collection_name = $collection_name;
         $attachment->media()->associate($media);
         $attachment->model()->associate($model);
         $attachment->save();
@@ -169,7 +169,7 @@ abstract class TestCase extends BaseTestCase
 
     public function getMediaDirectory(string $suffix = ''): string
     {
-        return $this->getTempDirectory().'/media'.($suffix == '' ? '' : '/'.$suffix);
+        return $this->getTempDirectory().'/media'.($suffix == '' ? '' : DIRECTORY_SEPARATOR .$suffix);
     }
 
     public function getTestFilesDirectory(string $suffix = ''): string
