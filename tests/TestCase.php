@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Javaabu\Helpers\HelpersServiceProvider;
 use Javaabu\Mediapicker\Models\Attachment;
+use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithConversions;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithSingleFile;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithUnacceptedFile;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithUnacceptedMimeType;
@@ -104,6 +105,11 @@ abstract class TestCase extends BaseTestCase
     protected function getModel(): Post
     {
         return Post::factory()->create();
+    }
+
+    protected function getModelWithConversions(): ModelWithConversions
+    {
+        return ModelWithConversions::factory()->create();
     }
 
     protected function getModelWithUnacceptedFile(): ModelWithUnacceptedFile

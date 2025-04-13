@@ -7,9 +7,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Javaabu\Mediapicker\Contracts\Attachment;
-use Spatie\MediaLibrary\Conversions\ConversionCollection;
-use Spatie\MediaLibrary\Conversions\FileManipulator;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Javaabu\Mediapicker\Conversions\AttachmentConversionCollection;
+use Javaabu\Mediapicker\Conversions\MediaManipulator;
 
 class PerformAttachmentConversionsJob implements ShouldQueue
 {
@@ -20,16 +19,16 @@ class PerformAttachmentConversionsJob implements ShouldQueue
     public $deleteWhenMissingModels = true;
 
     public function __construct(
-        protected ConversionCollection $conversions,
+        protected AttachmentConversionCollection $conversions,
         protected Attachment $attachment,
         protected bool $onlyMissing = false,
     ) {}
 
-    public function handle(FileManipulator $fileManipulator): bool
+    public function handle(MediaManipulator $mediaManipulator): bool
     {
-        $fileManipulator->performConversions(
+        $mediaManipulator->performAttachmentConversions(
             $this->conversions,
-            $this->media,
+            $this->attachment,
             $this->onlyMissing
         );
 

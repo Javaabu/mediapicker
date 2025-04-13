@@ -575,4 +575,20 @@ class InteractsWithAttachmentsTest extends TestCase
         $result = Post::withAttachments()->first();
         $this->assertTrue($result->relationLoaded('attachments'));
     }
+
+    #[Test]
+    public function it_can_generate_attachment_conversions(): void
+    {
+        $model = $this->getModelWithConversions();
+
+        $media = $this->getMedia();
+
+        $attachment = $model->addAttachment($media)
+            ->toAttachmentCollection();
+
+        $path = $model->getFirstAttachmentPath(conversionName: 'test');
+
+        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path);
+        $this->assertFileExists($path);
+    }
 }
