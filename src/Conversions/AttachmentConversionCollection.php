@@ -28,7 +28,9 @@ class AttachmentConversionCollection extends ConversionCollection
     {
         $media = $attachment->media;
 
-        $this->media = $media;
+        if ($media) {
+            $this->media = $media;
+        }
 
         $this->items = [];
 

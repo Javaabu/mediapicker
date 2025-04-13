@@ -591,4 +591,27 @@ class InteractsWithAttachmentsTest extends TestCase
         $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path);
         $this->assertFileExists($path);
     }
+
+    #[Test]
+    public function it_deletes_attachment_conversions_when_the_media_is_deleted(): void
+    {
+        $model = $this->getModelWithConversions();
+
+        $media = $this->getMedia();
+
+        $attachment = $model->addAttachment($media)
+            ->toAttachmentCollection();
+
+        $path = $model->getFirstAttachmentPath(conversionName: 'test');
+
+        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path);
+        $this->assertDirectoryExists($this->getMediaDirectory($media->getKey()));
+        $this->assertFileExists($path);
+
+        $media->delete();
+
+        $this->assertFileDoesNotExist($path);
+
+        $this->assertDirectoryDoesNotExist($this->getMediaDirectory($media->getKey()));
+    }
 }

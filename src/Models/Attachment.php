@@ -6,8 +6,10 @@ use DateTimeInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Javaabu\Mediapicker\Conversions\AttachmentConversionCollection;
 use Javaabu\Mediapicker\Mediapicker;
 use Javaabu\Mediapicker\UrlGenerator\AttachmentUrlGeneratorFactory;
+use Spatie\MediaLibrary\Conversions\Conversion;
 use Spatie\MediaLibrary\MediaCollections\Models\Concerns\IsSorted;
 
 class Attachment extends Model implements \Javaabu\Mediapicker\Contracts\Attachment
