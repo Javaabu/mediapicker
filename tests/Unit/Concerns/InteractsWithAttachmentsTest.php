@@ -31,7 +31,7 @@ class InteractsWithAttachmentsTest extends TestCase
         /** @var Post $post */
         $post = Post::factory()->create();
 
-        $attachment = $this->getAttachment($post);
+        $this->getAttachment($post);
 
         $this->assertDatabaseHas('attachments', [
             'model_type' => 'post',
