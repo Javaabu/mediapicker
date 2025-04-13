@@ -599,7 +599,7 @@ class InteractsWithAttachmentsTest extends TestCase
 
         $media = $this->getMedia();
 
-        $attachment = $model->addAttachment($media)
+        $model->addAttachment($media)
             ->toAttachmentCollection();
 
         $path = $model->getFirstAttachmentPath(conversionName: 'test');
