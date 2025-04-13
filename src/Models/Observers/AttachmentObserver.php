@@ -3,6 +3,8 @@
 namespace Javaabu\Mediapicker\Models\Observers;
 
 use Javaabu\Mediapicker\Contracts\Attachment;
+use Javaabu\Mediapicker\Conversions\MediaManipulator;
+use Javaabu\Mediapicker\Mediapicker;
 
 class AttachmentObserver
 {
@@ -15,5 +17,23 @@ class AttachmentObserver
         }
     }
 
+    public function created(Attachment $attachment): void
+    {
+        if (is_null($attachment->model_id)) {
+            return;
+        }
+
+        $attachmentClass = Mediapicker::attachmentModel();
+
+        $eventDispatcher = $attachmentClass::getEventDispatcher();
+        $attachmentClass::unsetEventDispatcher();
+
+        /** @var MediaManipulator $mediaManipulator */
+        $mediaManipulator = app(MediaManipulator::class);
+
+        $mediaManipulator->createDerivedAttachmentFiles($attachment);
+
+        $attachmentClass::setEventDispatcher($eventDispatcher);
+    }
     // TODO
 }
