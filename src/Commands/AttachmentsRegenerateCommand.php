@@ -18,7 +18,7 @@ class AttachmentsRegenerateCommand extends Command
 
     protected $signature = 'mediapicker:regenerate {modelType?} {--ids=*}
     {--only=* : Regenerate specific conversions}
-    {--starting-from-id= : Regenerate media with an id equal to or higher than the provided value}
+    {--starting-from-id= : Regenerate attachment with an id equal to or higher than the provided value}
     {--X|exclude-starting-id : Exclude the provided id when regenerating from a specific id}
     {--only-missing : Regenerate only missing conversions}
     {--force : Force the operation to run when in production}

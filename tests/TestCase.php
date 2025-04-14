@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\View;
 use Javaabu\Helpers\HelpersServiceProvider;
 use Javaabu\Mediapicker\Models\Attachment;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithConversions;
+use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithMultipleConversions;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithSameConversions;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithSingleFile;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithUnacceptedFile;
@@ -118,6 +119,11 @@ abstract class TestCase extends BaseTestCase
     protected function getModelWithSameConversions(): ModelWithSameConversions
     {
         return ModelWithSameConversions::factory()->create();
+    }
+
+    protected function getModelWithMultipleConversions(): ModelWithMultipleConversions
+    {
+        return ModelWithMultipleConversions::factory()->create();
     }
 
     protected function getModelWithConversions(): ModelWithConversions
