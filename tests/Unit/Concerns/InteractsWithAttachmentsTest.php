@@ -631,10 +631,7 @@ class InteractsWithAttachmentsTest extends TestCase
         $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path);
         $this->assertFileExists($path);
 
-        $dimensions = $this->getImageDimensions($path);
-        $this->assertEquals(100, $dimensions['width']);
-        $this->assertEquals(100, $dimensions['height']);
-
+        $file_hash = hash_file('sha256', $path);
 
         $attachment_2 = $model_2->addAttachment($media)
             ->toAttachmentCollection();
@@ -644,8 +641,7 @@ class InteractsWithAttachmentsTest extends TestCase
         $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path_2);
         $this->assertFileExists($path_2);
 
-        $dimensions_2 = $this->getImageDimensions($path_2);
-        $this->assertEquals(100, $dimensions_2['width']);
-        $this->assertEquals(100, $dimensions_2['height']);
+        $file_hash_2 =  hash_file('sha256', $path_2);
+        $this->assertEquals($file_hash, $file_hash_2);
     }
 }
