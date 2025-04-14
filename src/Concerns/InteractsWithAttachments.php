@@ -542,29 +542,4 @@ trait InteractsWithAttachments
     {
         $query->with('attachments.media');
     }
-
-    /**
-     * Validate media mimetype
-     *
-     * @param Media $media
-     * @param array ...$allowedMimeTypes
-     * @throws MediaMimeTypeNotAllowed
-     */
-    protected function guardAgainstInvalidMediaMimeType(Media $media, ...$allowedMimeTypes)
-    {
-        $allowedMimeTypes = Arr::flatten($allowedMimeTypes);
-
-        if (empty($allowedMimeTypes)) {
-            return;
-        }
-
-        $validation = Validator::make(
-            ['mimetype' => $media->mime_type],
-            ['mimetype' => 'string|in:' . implode(',', $allowedMimeTypes)]
-        );
-
-        if ($validation->fails()) {
-            throw MediaMimeTypeNotAllowed::create($media, $allowedMimeTypes);
-        }
-    }
 }
