@@ -31,9 +31,8 @@ class AttachmentObserver
         /** @var MediaManipulator $mediaManipulator */
         $mediaManipulator = app(MediaManipulator::class);
 
-        $mediaManipulator->createDerivedAttachmentFiles($attachment);
+        $mediaManipulator->createDerivedAttachmentFiles($attachment, onlyMissing: true);
 
         $attachmentClass::setEventDispatcher($eventDispatcher);
     }
-    // TODO
 }

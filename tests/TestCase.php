@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\View;
 use Javaabu\Helpers\HelpersServiceProvider;
 use Javaabu\Mediapicker\Models\Attachment;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithConversions;
+use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithSameConversions;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithSingleFile;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithUnacceptedFile;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithUnacceptedMimeType;
@@ -83,6 +84,13 @@ abstract class TestCase extends BaseTestCase
         $this->setUpMorphMap();
     }
 
+    protected function getImageDimensions(string $path): array
+    {
+        list($width, $height, $type, $attr) = getimagesize($path);
+
+        return compact('width', 'height');
+    }
+
     protected function getUserWithMedia(): User
     {
         /** @var User $user */
@@ -105,6 +113,11 @@ abstract class TestCase extends BaseTestCase
     protected function getModel(): Post
     {
         return Post::factory()->create();
+    }
+
+    protected function getModelWithSameConversions(): ModelWithSameConversions
+    {
+        return ModelWithSameConversions::factory()->create();
     }
 
     protected function getModelWithConversions(): ModelWithConversions

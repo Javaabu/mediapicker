@@ -614,4 +614,38 @@ class InteractsWithAttachmentsTest extends TestCase
 
         $this->assertDirectoryDoesNotExist($this->getMediaDirectory($media->getKey()));
     }
+
+    #[Test]
+    public function it_reuses_conversions_from_other_models(): void
+    {
+        $model = $this->getModelWithConversions();
+        $model_2 = $this->getModelWithSameConversions();
+
+        $media = $this->getMedia();
+
+        $attachment = $model->addAttachment($media)
+            ->toAttachmentCollection();
+
+        $path = $model->getFirstAttachmentPath(conversionName: 'test');
+
+        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path);
+        $this->assertFileExists($path);
+
+        $dimensions = $this->getImageDimensions($path);
+        $this->assertEquals(100, $dimensions['width']);
+        $this->assertEquals(100, $dimensions['height']);
+
+
+        $attachment_2 = $model_2->addAttachment($media)
+            ->toAttachmentCollection();
+
+        $path_2 = $model_2->getFirstAttachmentPath(conversionName: 'test');
+
+        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path_2);
+        $this->assertFileExists($path_2);
+
+        $dimensions_2 = $this->getImageDimensions($path_2);
+        $this->assertEquals(100, $dimensions_2['width']);
+        $this->assertEquals(100, $dimensions_2['height']);
+    }
 }
