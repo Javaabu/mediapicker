@@ -280,4 +280,5 @@ class AttachmentsRegenerateCommandTest extends TestCase
         $this->assertFileExists($path2);
         $this->assertFileDoesNotExist($path3);
     }
+
 }
