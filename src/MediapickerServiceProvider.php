@@ -63,16 +63,15 @@ class MediapickerServiceProvider extends ServiceProvider
             $attachmentClass = $this->getAttachmentClass();
             return new AttachmentRepository(new $attachmentClass);
         });
-        // TODO
-/*
-        $this->app->bind('command.attachments:regenerate', AttachmentsRegenerateCommand::class);
-        $this->app->bind('command.attachments:clear', AttachmentsClearCommand::class);
-        $this->app->bind('command.attachments:clean', AttachmentsCleanCommand::class);
+
+        $this->app->bind('command.mediapicker:regenerate', AttachmentsRegenerateCommand::class);
+        $this->app->bind('command.mediapicker:clear', AttachmentsClearCommand::class);
+        $this->app->bind('command.mediapicker:clean', AttachmentsCleanCommand::class);
 
         $this->commands([
-            'command.attachments:regenerate',
-            'command.attachments:clear',
-            'command.attachments:clean',
-        ]);*/
+            'command.mediapicker:regenerate',
+            'command.mediapicker:clear',
+            'command.mediapicker:clean',
+        ]);
     }
 }
