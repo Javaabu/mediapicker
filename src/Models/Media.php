@@ -2,9 +2,9 @@
 
 namespace Javaabu\Mediapicker\Models;
 
-use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Javaabu\Helpers\Media\AllowedMimeTypes;
-use Spatie\Image\Image;
+use Javaabu\Mediapicker\Contracts\MediaOwner;
 use Illuminate\Support\Str;
 use Javaabu\Helpers\AdminModel\AdminModel;
 use Javaabu\Helpers\AdminModel\IsAdminModel;
@@ -13,7 +13,6 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media as BaseMedia;
 
 class Media extends BaseMedia implements AdminModel
 {
-
     use LogsActivity;
     use IsAdminModel;
 
@@ -29,8 +28,10 @@ class Media extends BaseMedia implements AdminModel
      *
      * @var array
      */
-    protected static array $ignoreChangedAttributes = ['created_at', 'updated_at'];
-
+    protected static array $ignoreChangedAttributes = [
+        'created_at',
+        'updated_at'
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -38,136 +39,93 @@ class Media extends BaseMedia implements AdminModel
      * @var array
      */
     protected $fillable = [
-        'description',
         'name',
     ];
 
-    /**
-     * The attributes that are searchable.
-     *
-     * @var array
-     */
-    protected $searchable = [
-        'name',
-        'description',
-    ];
-
-    /**
-     * With relations scope
-     *
-     * @param $query
-     * @return
-     */
-    public function scopeWithRelations($query)
+    protected function setDescriptionAttribute(?string $value = null)
     {
-        return $query->with('model');
+        $this->setCustomProperty('description', $value);
     }
 
-    /**
-     * User visible
-     *
-     * @param $query
-     * @return mixed
-     */
-    public function scopeUserVisible($query)
+    protected function getDescriptionAttribute(): ?string
     {
-        // first try admin
-        $admin = auth()->user() instanceof User ?
-            auth()->user() :
-            auth()->guard('web_admin')->user();
-
-        if ($admin) {
-            if ($admin->can('create', static::class)) {
-                if ($admin->can('edit_other_users_media')) {
-                    // can view all
-                    return $query;
-                } else {
-                    return $query->whereModelType($admin->getMorphClass())
-                                 ->whereModelId($admin->id);
-                }
-            }
-        }
-
-        // cant view anything
-        return $query->whereId(-1);
+        return $this->getCustomProperty('description');
     }
 
+    protected function setWidthAttribute(?int $value = null)
+    {
+        $this->setCustomProperty('width', $value);
+    }
 
-    /**
-     * Get type attribute
-     */
-    public function getTypeSlugAttribute(): ?string
+    protected function getWidthAttribute(): ?int
+    {
+        return $this->getCustomProperty('width');
+    }
+
+    protected function setHeightAttribute(?int $value = null)
+    {
+        $this->setCustomProperty('height', $value);
+    }
+
+    protected function getHeightAttribute(): ?int
+    {
+        return $this->getCustomProperty('height');
+    }
+
+    protected function getFileTypeAttribute(): ?string
     {
         return AllowedMimeTypes::getType($this->mime_type);
     }
 
-    /**
-     * Get icon attribute
-     */
-    public function getIconAttribute()
+    public function getIcon(string $icon_pack = '', bool $with_prefix = true): string
     {
-        $icon = AllowedMimeTypes::getIcon($this->mime_type);
-
-        return 'zmdi zmdi-' . ($icon ?: 'file');
+        return AllowedMimeTypes::getIcon($this->mime_type, $icon_pack, $with_prefix);
     }
 
-    /**
-     * Get web icon attribute
-     *
-     * @return string
-     */
-    public function getWebIconAttribute()
+    public function scopeHasFileType(Builder $query, array|string $type): void
     {
-        $icon = AllowedMimeTypes::getWebIcon($this->mime_type);
-
-        return 'fa fa-' . ($icon ?: 'file');
+        $query->whereIn('mime_type', AllowedMimeTypes::getAllowedMimeTypes($type));
     }
 
-    /**
-     * Type scope
-     */
-    public function scopeHasType(Builder $query, $type)
+    public function scopeSearch($query, $search): mixed
     {
-        return $query->whereIn('mime_type', AllowedMimeTypes::getAllowedMimeTypes($type));
+        return $query->where('name', 'like', '%'.$search.'%')
+             ->orWhere('custom_properties->description', 'like', '%'.$search.'%');
     }
 
-
-
-    /**
-     * Get the width attribute
-     */
-    public function getWidthAttribute()
+    public function scopeUserVisible(Builder $query): void
     {
-        if (! $this->hasCustomProperty('width')) {
-            $this->saveDimensions();
+        $user = auth()->user();
+
+        if ($user instanceof MediaOwner && $user->canViewAnyMedia()) {
+            $query->whereCollectionName($user->getMediapickerCollectionName());
+
+            if (! $user->canViewOthersMedia()) {
+                // can view only own
+                $query->whereModelType($user->getMorphClass())
+                      ->whereModelId($user->getKey());
+            }
+
+            return;
         }
 
-        return $this->getCustomProperty('width');
+        // cant view anything
+        $query->where($this->getKeyName(), -1);
     }
 
     /**
      * Save the image dimensions
      */
-    public function saveDimensions()
+    /*public function saveDimensions()
     {
         $image = Image::load($this->getUrl());
 
         $this->setCustomProperty('width', $image->getWidth());
         $this->setCustomProperty('height', $image->getHeight());
         $this->save();
-    }
+    }*/
 
-    /**
-     * Get the height attribute
-     */
-    public function getHeightAttribute()
-    {
-        if (! $this->hasCustomProperty('height')) {
-            $this->saveDimensions();
-        }
 
-        return $this->getCustomProperty('height');
-    }
 
     public function getShortNameAttribute()
     {

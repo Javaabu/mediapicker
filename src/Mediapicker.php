@@ -7,6 +7,12 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Mediapicker
 {
+
+    public static function collectionName(): string
+    {
+        return config('mediapicker.collection_name');
+    }
+
     /**
      * @return class-string<Attachment>
      */

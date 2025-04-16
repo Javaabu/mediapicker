@@ -92,21 +92,31 @@ abstract class TestCase extends BaseTestCase
         return compact('width', 'height');
     }
 
-    protected function getUserWithMedia(): User
+    protected function getUserWithMedia(string $file = '', string $name = ''): User
     {
-        /** @var User $user */
-        $user = User::factory()->create();
+        if (! $file) {
+            $file = $this->getTestJpg();
+        }
 
-        $user->addMedia($this->getTestJpg())
+        /** @var User $user */
+        $user = User::factory()->create([
+            'name' => $name ?: fake()->name,
+        ]);
+
+        $user->addMedia($file)
             ->preservingOriginal()
             ->toMediaCollection('mediapicker');
 
         return $user;
     }
 
-    protected function getMedia(): Media
+    protected function getMedia(string $file = ''): Media
     {
-        $user = $this->getUserWithMedia();
+        if (! $file) {
+            $file = $this->getTestJpg();
+        }
+
+        $user = $this->getUserWithMedia($file);
 
         return $user->getFirstMedia('mediapicker');
     }

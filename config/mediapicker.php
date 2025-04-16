@@ -26,6 +26,11 @@ return [
     'attachment_model' => \Javaabu\Mediapicker\Models\Attachment::class,
 
     /*
+     * Collection name to be used for media picker uploads
+     */
+    'collection_name' => 'mediapicker',
+
+    /*
     |--------------------------------------------------------------------------
     | Attachment Observer
     |--------------------------------------------------------------------------
