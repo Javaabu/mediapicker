@@ -195,5 +195,267 @@ class MediaControllerTest extends TestCase
             ->assertSee($media->name);
     }
 
+    #[Test]
+    public function it_can_show_the_create_media_page_for_authorized_users(): void
+    {
+        $this->withoutExceptionHandling();
 
+        Gate::define('edit_media', function (User $user) {
+            return true;
+        });
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $this->get('/media/create')
+            ->assertSuccessful()
+            ->assertViewIs('mediapicker::material-admin-26.media.create')
+            ->assertSee('Add Media');
+    }
+
+    #[Test]
+    public function it_cannot_show_the_create_media_page_for_unauthorized_users(): void
+    {
+        Gate::define('edit_media', function (User $user) {
+            return false;
+        });
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $this->get('/media/create')
+            ->assertStatus(403)
+            ->assertDontSee('Add Media');
+    }
+
+    #[Test]
+    public function it_can_show_media_details_for_authorized_users(): void
+    {
+        $this->withoutExceptionHandling();
+
+        Gate::define('view_media', function (User $user) {
+            return true;
+        });
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $media = $this->getMedia(user: $user);
+
+        $this->get("/media/{$media->id}")
+            ->assertSuccessful()
+            ->assertViewIs('mediapicker::material-admin-26.media.show')
+            ->assertSee($media->name);
+    }
+
+    #[Test]
+    public function it_cannot_show_media_details_for_unauthorized_users(): void
+    {
+        Gate::define('view_media', function (User $user) {
+            return false;
+        });
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $media = $this->getMedia(user: $user);
+
+        $this->get("/media/{$media->id}")
+            ->assertStatus(403)
+            ->assertDontSee($media->name);
+    }
+
+    #[Test]
+    public function it_can_show_edit_media_page_for_authorized_users(): void
+    {
+        $this->withoutExceptionHandling();
+
+        Gate::define('edit_media', function (User $user) {
+            return true;
+        });
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $media = $this->getMedia(user: $user);
+
+        $this->get("/media/{$media->id}/edit")
+            ->assertSuccessful()
+            ->assertViewIs('mediapicker::material-admin-26.media.edit')
+            ->assertSee($media->name);
+    }
+
+    #[Test]
+    public function it_cannot_update_media_for_unauthorized_users(): void
+    {
+        Gate::define('edit_media', function (User $user) {
+            return false;
+        });
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $media = $this->getMedia(user: $user);
+
+        $this->put("/media/{$media->id}", [
+            'name' => 'Updated Name',
+        ])
+            ->assertStatus(403);
+
+        $this->assertDatabaseHas('media', [
+            'id' => $media->id,
+            'name' => 'test'
+        ]);
+    }
+
+    #[Test]
+    public function it_can_update_media_for_authorized_users(): void
+    {
+        $this->withoutExceptionHandling();
+
+        Gate::define('edit_media', function (User $user) {
+            return true;
+        });
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $media = $this->getMedia(user: $user);
+
+        $this->put("/media/{$media->id}", [
+            'name' => 'Updated Name',
+            'description' => 'Updated Description',
+        ])
+            ->assertRedirect()
+            ->assertSessionMissing('errors');
+
+        $this->assertDatabaseHas('media', [
+            'id' => $media->id,
+            'name' => 'Updated Name',
+            'custom_properties' => json_encode(['description' => 'Updated Description'])
+        ]);
+    }
+
+    #[Test]
+    public function it_can_update_media_and_return_json_response(): void
+    {
+        $this->withoutExceptionHandling();
+
+        Gate::define('edit_media', function (User $user) {
+            return true;
+        });
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $media = $this->getMedia(user: $user);
+
+        $this->putJson("/media/{$media->id}", [
+            'name' => 'Updated Name',
+            'description' => 'Updated Description',
+        ])
+            ->assertSuccessful()
+            ->assertJson([
+                'name' => 'Updated Name',
+            ]);
+    }
+
+    #[Test]
+    public function it_can_delete_media_for_authorized_users(): void
+    {
+        $this->withoutExceptionHandling();
+
+        Gate::define('delete_media', function (User $user) {
+            return true;
+        });
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $media = $this->getMedia(user: $user);
+
+        $this->delete("/media/{$media->id}")
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('media', [
+            'id' => $media->id
+        ]);
+    }
+
+    #[Test]
+    public function it_can_delete_media_and_return_json_response(): void
+    {
+        $this->withoutExceptionHandling();
+
+        Gate::define('delete_media', function (User $user) {
+            return true;
+        });
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $media = $this->getMedia(user: $user);
+
+        $this->deleteJson("/media/{$media->id}")
+            ->assertSuccessful();
+
+        $this->assertDatabaseMissing('media', [
+            'id' => $media->id
+        ]);
+    }
+
+    #[Test]
+    public function it_can_perform_bulk_delete_for_authorized_users(): void
+    {
+        $this->withoutExceptionHandling();
+
+        Gate::define('edit_media', function (User $user) {
+            return true;
+        });
+
+        Gate::define('delete_media', function (User $user) {
+            return true;
+        });
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $media1 = $this->getMedia(user: $user);
+        $media2 = $this->getMedia($this->getTestImageEndingWithUnderscore(), user: $user);
+
+        $this->patch('/media', [
+            'action' => 'delete',
+            'media' => [$media1->id, $media2->id],
+        ])
+            ->assertRedirect()
+            ->assertSessionMissing('errors');
+
+        $this->assertDatabaseMissing('media', ['id' => $media1->id]);
+        $this->assertDatabaseMissing('media', ['id' => $media2->id]);
+    }
+
+    #[Test]
+    public function it_cannot_perform_bulk_delete_for_unauthorized_users(): void
+    {
+        Gate::define('edit_media', function (User $user) {
+            return true;
+        });
+
+        Gate::define('delete_media', function (User $user) {
+            return false;
+        });
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $media = $this->getMedia(user: $user);
+
+        $this->patch('/media', [
+            'action' => 'delete',
+            'media' => [$media->id],
+        ])
+            ->assertStatus(403);
+
+        $this->assertDatabaseHas('media', ['id' => $media->id]);
+    }
 }

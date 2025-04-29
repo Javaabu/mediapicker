@@ -1,4 +1,4 @@
-<x-forms::card :title="__('Upload Media')"">
+<x-forms::card :title="__('Upload Media')">
     @if(! empty($type))
         <div id="append-data">
             <x-forms::hidden name="type" :value="$type" />
@@ -36,5 +36,5 @@
 
 
 @push(config('mediapicker.scripts_stack'))
-    @include('mediapicker::material-admin-26.media.form._script')
+    @include('mediapicker::material-admin-26.media.form._upload-script')
 @endpush

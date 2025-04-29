@@ -1,6 +1,6 @@
 <x-forms::card>
 
-    <x-forms::text-entry name="url">
+    <x-forms::text-entry :label="__('URL')">
         <a href="{{ $media->getUrl() }}" target="_blank">
             <i class="zmdi zmdi-open-in-new mr-2"></i> {{ $media->getUrl() }}
         </a>

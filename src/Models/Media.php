@@ -41,6 +41,7 @@ class Media extends BaseMedia implements AdminModel
      */
     protected $fillable = [
         'name',
+        'description',
     ];
 
     protected function setDescriptionAttribute(?string $value = null)

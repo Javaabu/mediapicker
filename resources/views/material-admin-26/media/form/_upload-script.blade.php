@@ -14,7 +14,7 @@
             uploadMultiple: false,
             parallelUploads: 50,
             timeout: 600000,
-            acceptedFiles: '{{ AllowedMimeTypes::getAllowedMimeTypesString($type ?? '') }}',
+            acceptedFiles: '{{ \Javaabu\Helpers\Media\AllowedMimeTypes::getAllowedMimeTypesString($type ?? '') }}',
             error: function (file, response) {
                 var message = '';
 

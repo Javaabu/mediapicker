@@ -261,7 +261,7 @@ class MediaController extends Controller
         ];
 
         if (! $user->canDeleteOthersMedia()) {
-            $rules['media.*'] .= ',model_id,' . $user->getKeyName();
+            $rules['media.*'] .= ',model_id,' . $user->getKey();
         }
 
         $this->validate($request, $rules);
