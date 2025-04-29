@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Javaabu\Helpers\AdminModel\AdminModel;
 use Javaabu\Helpers\AdminModel\IsAdminModel;
 use Javaabu\Activitylog\Traits\LogsActivity;
+use Javaabu\Mediapicker\Mediapicker;
 use Spatie\MediaLibrary\MediaCollections\Models\Media as BaseMedia;
 
 class Media extends BaseMedia implements AdminModel
@@ -93,17 +94,32 @@ class Media extends BaseMedia implements AdminModel
              ->orWhere('custom_properties->description', 'like', '%'.$search.'%');
     }
 
+    public function scopeFindForController(Builder $query, int|string $media_id): void
+    {
+        $user = auth()->user();
+
+        if ($user instanceof MediaOwner) {
+            $query->whereCollectionName($user->getMediapickerCollectionName())
+                  ->whereModelType($user->getMorphClass());
+
+            return;
+        }
+
+        // cant view anything
+        $query->where($this->getKeyName(), -1);
+    }
+
     public function scopeUserVisible(Builder $query): void
     {
         $user = auth()->user();
 
         if ($user instanceof MediaOwner && $user->canViewAnyMedia()) {
-            $query->whereCollectionName($user->getMediapickerCollectionName());
+            $query->whereCollectionName($user->getMediapickerCollectionName())
+                  ->whereModelType($user->getMorphClass());
 
             if (! $user->canViewOthersMedia()) {
                 // can view only own
-                $query->whereModelType($user->getMorphClass())
-                      ->whereModelId($user->getKey());
+                $query->whereModelId($user->getKey());
             }
 
             return;
@@ -113,23 +129,19 @@ class Media extends BaseMedia implements AdminModel
         $query->where($this->getKeyName(), -1);
     }
 
-    /**
-     * Save the image dimensions
-     */
-    /*public function saveDimensions()
-    {
-        $image = Image::load($this->getUrl());
-
-        $this->setCustomProperty('width', $image->getWidth());
-        $this->setCustomProperty('height', $image->getHeight());
-        $this->save();
-    }*/
-
-
 
     public function getShortNameAttribute()
     {
         return Str::limit($this->name, 15);
+    }
+
+    public function url(string $action, ?\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): string
+    {
+        $media = $media ?: $this;
+        $controller = Mediapicker::mediaController();
+        $parameters = in_array($action, ['show', 'edit', 'update', 'destroy']) ? $media : [];
+
+        return action([$controller, $action], $parameters);
     }
 
     /**
@@ -137,6 +149,6 @@ class Media extends BaseMedia implements AdminModel
      */
     public function getAdminUrlAttribute(): string
     {
-        return route('admin.media.edit', $this);
+        return $this->url('show');
     }
 }

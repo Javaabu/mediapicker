@@ -2,41 +2,21 @@
 
 namespace Javaabu\Mediapicker\Http\Controllers;
 
-use App\Http\Controllers\Admin\Exception;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use App\Helpers\Media\Media;
-use Illuminate\Http\Response;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Contracts\View\View;
-use App\Http\Requests\MediaRequest;
 use Illuminate\Support\Facades\Log;
 use Javaabu\Helpers\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Contracts\View\Factory;
+use Javaabu\Helpers\Media\AllowedMimeTypes;
 use Javaabu\Helpers\Traits\HasOrderbys;
-use Javaabu\Helpers\Exceptions\AppException;
-use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Auth\Access\AuthorizationException;
-use Spatie\MediaLibrary\MediaCollections\FileAdder;
-use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
-use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
+use Javaabu\Mediapicker\Contracts\MediaOwner;
+use Javaabu\Mediapicker\Http\Requests\MediaRequest;
+use Javaabu\Mediapicker\Mediapicker;
+use Javaabu\Mediapicker\Models\Media;
+use Spatie\Image\Image;
 
 class MediaController extends Controller
 {
     use HasOrderbys;
-
-    /**
-     * Create a new  controller instance.
-     *
-     * @param void
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->authorizeResource(Media::class);
-    }
 
     /**
      * Initialize orderbys
@@ -44,87 +24,65 @@ class MediaController extends Controller
     protected static function initOrderbys()
     {
         static::$orderbys = [
-            'name'       => _d('Name'),
-            'created_at' => _d('Created At'),
-            'id'         => _d('ID'),
+            'name'       => __('Name'),
+            'created_at' => __('Created At'),
+            'id'         => __('ID'),
         ];
     }
 
     /**
+     * @return Media
+     */
+    protected function resolveMedia(string|int $media_id)
+    {
+        $model_class = Mediapicker::mediaModel();
+
+        $media = $model_class::findForController($media_id)->firstOrFail();
+
+        return $media;
+    }
+
+    /**
      * Display a listing of the resource.
-     *
-     * @param Request $request
-     * @return Application|Factory|View
      */
     public function index(Request $request)
     {
-        $title = _d('All Media');
+        $this->authorize('viewAny', Mediapicker::mediaModel());
+
+        $title = __('All Media');
         $orderby = $this->getOrderBy($request, 'created_at');
         $order = $this->getOrder($request, 'created_at', $orderby);
         $per_page = $this->getPerPage($request, 24);
 
         $view = $request->input('view', 'grid');
 
-        $media_items = Media::userVisible()
+        $media_class = Mediapicker::mediaModel();
+
+        $media_items = $media_class::userVisible()
                             ->orderBy($orderby, $order);
 
-        $search = null;
-        if ($search = $request->input('search')) {
-            $media_items->search($search);
-            $title = _d('Media matching \':search\'', ['search' => $search]);
-        }
-
-        if ($type = $request->input('type')) {
-            $media_items->hasType($type);
-        }
-
-        if ($request->filled('stock')) {
-            $media_items->whereIsStock($request->input('stock') == true);
-        }
-
-        $media_items = $media_items->withRelations()
-                                   ->paginate($per_page)
-                                   ->appends($request->except('page'));
-
-        return view('admin.media.index', compact(
-            'media_items',
-            'title',
-            'per_page',
-            'search',
-            'view'
-        ));
-    }
-
-    /**
-     * Display a listing of the resources.
-     *
-     * @param Request $request
-     * @return Application|Factory|View
-     * @throws AuthorizationException
-     */
-    public function picker(Request $request)
-    {
-        $this->authorize('viewAny', Media::class);
-
-        $title = _d('All Media');
-        $per_page = 24;
-
+        $mode = $request->input('mode', 'index');
         $single = $request->input('single') == true;
 
-        $media_items = Media::userVisible()
-                            ->where('model_type', 'user')
-                            ->latest('created_at');
-
         $search = null;
         if ($search = $request->input('search')) {
             $media_items->search($search);
-            $title = _d('Media matching \':search\'', ['search' => $search]);
+            $title = __('Media matching \':search\'', ['search' => $search]);
         }
 
         $type = $request->input('type');
+
         if ($type) {
-            $media_items->hasType($type);
+            $media_items->hasFileType($type);
         }
+
+        if ($date_field = $request->input('date_field')) {
+            $media_items->dateBetween($date_field, $request->input('date_from'), $request->input('date_to'));
+        }
+
+        $media_items = $media_items->with('model')
+                                   ->paginate($per_page)
+                                   ->appends($request->except('page'));
 
         $selected = $request->input('selected', []);
         $selected = Arr::wrap($selected);
@@ -133,229 +91,196 @@ class MediaController extends Controller
             $selected = [$selected[0]];
         }
 
-        $media_items = $media_items->withRelations()
-                                   ->paginate($per_page)
-                                   ->appends($request->except('page'));
+        $view_name = $mode == 'picker' ? 'media.picker.show' : 'media.index';
 
-        return view('admin.media.picker.show', compact(
-            'selected',
-            'single',
-            'type',
+        return view(Mediapicker::getViewName($view_name), compact(
             'media_items',
+            'single',
+            'selected',
+            'type',
+            'mode',
             'title',
             'per_page',
-            'search'
+            'search',
+            'view'
         ));
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return Application|Factory|View|Response
-     */
-    public function create()
-    {
-        return view('admin.media.create');
-    }
-
-    /**
      * Store a newly created resource in storage.
-     *
-     * @param MediaRequest $request
-     * @return JsonResponse|RedirectResponse
-     * @throws FileDoesNotExist
-     * @throws FileIsTooBig
      */
-    public function store($locale, MediaRequest $request)
+    public function store(MediaRequest $request)
     {
+        $this->authorize('create', Mediapicker::mediaModel());
+
+        /** @var MediaOwner $user */
         $user = $request->user();
 
-        // add file
-        $media = null;
-        if ($file = $request->file('file')) {
-            /** @var $media FileAdder */
-            $media = $user->addMedia($file);
+        $file = $request->file('file');
 
-            // set name
-            if ($name = $request->input('name')) {
-                $media->usingName($name);
-            }
+        $media = $user->addMedia($file);
 
-            // for testing
-            if (app()->runningUnitTests()) {
-                $media->preservingOriginal();
-            }
-
-            //
-            $media = $media->withResponsiveImages()
-                           ->usingFileName(Str::slug(Str::random(8)) . '.' . $file->guessExtension())
-                           ->toMediaCollection('media_library');
-
-            // set description
-            if ($request->anyFilled(['description'])) {
-                $media->description = $request->input('description');
-            }
-
-            /*// sync tags
-            if ($tags = $request->input('tags', [])) {
-                $media->syncTags($tags);
-            }*/
+        if ($name = $request->input('name')) {
+            $media->usingName($name);
         }
 
-        // check if it was added
-        if (! $media) {
-            throw new AppException(500, 'FileNotSaved', 'File could not be saved.');
+        $custom_properties = [];
+
+        if ($description = $request->input('description')) {
+            $custom_properties['description'] = $description;
         }
 
-        if (expects_json($request)) {
+        // get dimensions
+        try {
+            $image = Image::load($file);
+
+            $custom_properties['width'] =  $image->getWidth();
+            $custom_properties['height'] =  $image->getHeight();
+        } catch (\Exception $e) {
+            Log::error('MediapickerError: Could not load image dimensions. Error: ' . $e->getMessage());
+        }
+
+        if ($custom_properties) {
+            $media->withCustomProperties($custom_properties);
+        }
+
+        $media = $media->toMediaCollection($user->getMediapickerCollectionName());
+
+        $edit_url = Mediapicker::newMediaInstance()->url('edit', $media);
+
+        if ($request->expectsJson()) {
             return response()->json([
                 'success'   => true,
                 'id'        => $media->id,
-                'preview'   => $media->getUrl('preview'),
-                'thumb'     => $media->getUrl('thumb'),
-                'large'     => $media->getUrl('large'),
-                'type_slug' => $media->type_slug,
-                'icon'      => $media->icon,
+                'uuid'      => $media->uuid,
+                'thumb'     => $media->getUrl('mediapicker-thumb'),
+                'large'     => $media->getUrl('mediapicker-large'),
+                'file_type' => AllowedMimeTypes::getType($media->mime_type),
+                'icon'      => AllowedMimeTypes::getIcon($media->mime_type, Mediapicker::getIconPack()),
                 'name'      => $media->name,
                 'file_name' => $media->file_name,
-                'location'  => $media->getUrl(),
-                'edit_url'  => $media->admin_url,
-                //'tags' => $media->tagWords->pluck('name', 'id'),
+                'url'       => $media->getUrl(),
+                'edit_url'  => $edit_url,
             ]);
         }
 
         $this->flashSuccessMessage();
 
-        return redirect()->to($media->url('edit'));
+        return redirect()->to($edit_url);
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param Media $media
-     * @return Response
+     * Show the form for creating a new resource.
      */
-    public function show($locale, Media $media)
+    public function create()
     {
-        return redirect()->to($media->url('edit'));
+        $this->authorize('create', Mediapicker::mediaModel());
+
+        return view(Mediapicker::getViewName('media.create'));
+    }
+
+
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string|int $media_id)
+    {
+        $media = $this->resolveMedia($media_id);
+
+        $this->authorize('view', $media);
+
+        return view(Mediapicker::getViewName('media.show'), compact('media'));
     }
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param Media $media
-     * @return Response
      */
-    public function edit($locale, Media $media)
+    public function edit(string|int $media_id)
     {
-        $media->dontShowTranslationFallbacks();
-        return view('admin.media.edit', compact('media'));
+        $media = $this->resolveMedia($media_id);
+
+        $this->authorize('update', $media);
+
+        return view(Mediapicker::getViewName('media.edit'), compact('media'));
     }
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param MediaRequest $request
-     * @param Media $media
-     * @return JsonResponse|RedirectResponse
      */
-    public function update(MediaRequest $request, $locale, Media $media)
+    public function update(MediaRequest $request, string|int $media_id)
     {
-        // If this is not a translation, set lang
-        if ((! $request->input('is_translation')) && $request->input('lang')) {
-            $media->lang = $request->input('lang');
-            app()->setLocale($media->lang->value);
-        }
+        $media = $this->resolveMedia($media_id);
 
-        if ($request->input('translation')) {
-            $media->translations = $request->only($media->getTranslatables());
-            $media->hide_translation = $request->input('hide_translation', false);
-            $media->save();
-        } else {
-            $media->fill($request->only(['name', 'description']));
-            $media->save();
+        $this->authorize('update', $media);
 
-            /*if ($request->input('sync_tags')) {
-                $tags = $request->input('tags', []);
-                $media->syncTags($tags);
-            }*/
+        $media->fill($request->only(['name', 'description']));
+        $media->save();
 
-        }
-
-        if (expects_json($request)) {
+        if ($request->expectsJson()) {
             return response()->json($media);
         }
 
         $this->flashSuccessMessage();
-
-        if ($request->input('translation')) {
-            return redirect()->back();
-        }
 
         return redirect()->to($media->url('edit'));
     }
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param Media $media
-     * @param Request $request
-     * @return Response
-     * @throws Exception
      */
-    public function destroy($locale, Media $media, Request $request)
+    public function destroy(string|int $media_id, Request $request)
     {
-        if (! $media->delete()) {
-            if ($request->expectsJson()) {
-                return response()->json(false, 500);
-            }
-            abort(500);
-        }
+        $media = $this->resolveMedia($media_id);
+
+        $this->authorize('delete', $media);
+
+        $media->delete();
 
         if ($request->expectsJson()) {
             return response()->json(true);
         }
 
-        return redirect()->action('Admin\\MediaController@index');
+        return redirect()->to($media->url('index'));
     }
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param Request $request
-     * @return Response
-     * @internal param Inquiry $inquiry
      */
-    public function bulk($locale, Request $request)
+    public function bulk(Request $request)
     {
-        $this->authorize('create', Media::class);
+        $this->authorize('create', Mediapicker::mediaModel());
 
-        $this->validate($request, [
+        /** @var MediaOwner $user */
+        $user = $request->user();
+
+        $rules = [
             'action'  => 'required|in:delete',
             'media'   => 'required|array',
-            'media.*' => 'exists:media,id',
-        ]);
+            'media.*' => 'exists:media,id,collection_name,'.$user->getMediapickerCollectionName().',model_type,' . $user->getMorphClass(),
+        ];
+
+        if (! $user->canDeleteOthersMedia()) {
+            $rules['media.*'] .= ',model_id,' . $user->getKeyName();
+        }
+
+        $this->validate($request, $rules);
 
         $action = $request->input('action');
         $ids = $request->input('media', []);
-        $user = $request->user();
         $view = $request->input('view');
 
         switch ($action) {
             case 'delete':
-                //make sure allowed to delete
-                $this->authorize('delete_media');
+                $media_model = Mediapicker::mediaModel();
 
-                $media = Media::whereIn('id', $ids);
-
-                // filter to user's media
-                if (! $user->can('delete_other_users_media')) {
-                    $media->whereModelType($user->getMorphClass())
-                          ->whereModelId($user->id);
-                }
+                $media = $media_model::whereIn('id', $ids)
+                            ->where('collection_name', $user->getMediapickerCollectionName())
+                            ->whereModelType($user->getMorphClass());
 
                 $media->get()
-                      ->each(function (Media $media) {
+                      ->each(function ($media) {
+                          $this->authorize('delete', $media);
                           $media->delete();
                       });
                 break;
@@ -363,7 +288,7 @@ class MediaController extends Controller
 
         $this->flashSuccessMessage();
 
-        $redirect = add_query_arg('view', $view, translate_route('admin.media.index'));
+        $redirect = add_query_arg('view', $view, Mediapicker::newMediaInstance()->url('index'));
 
         return $this->redirect($request, $redirect);
     }

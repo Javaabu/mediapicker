@@ -7,6 +7,7 @@ use Javaabu\Mediapicker\Concerns\OwnsMedia;
 use Javaabu\Mediapicker\Contracts\MediaOwner;
 use Javaabu\Mediapicker\Tests\TestSupport\Factories\UserFactory;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class User extends Authenticatable implements MediaOwner
 {
@@ -17,5 +18,13 @@ class User extends Authenticatable implements MediaOwner
     protected static function newFactory()
     {
         return new UserFactory();
+    }
+
+    public function registerMediaConversions(?Media $media = null): void {
+        $this->registerMediapickerConversions($media);
+    }
+
+    public function registerMediaCollections(): void {
+        $this->registerMediapickerCollections();
     }
 }

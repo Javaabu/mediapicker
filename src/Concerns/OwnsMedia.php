@@ -64,6 +64,11 @@ trait OwnsMedia
         return $this->can('edit_media');
     }
 
+    public function canDeleteAnyMedia(): bool
+    {
+        return $this->can('delete_media');
+    }
+
     public function canViewOthersMedia(): bool
     {
         return $this->can('view_others_media');
@@ -93,7 +98,7 @@ trait OwnsMedia
 
     public function canDeleteMedia(Media $media): bool
     {
-        return $this->can('delete_media') &&
+        return $this->canDeleteAnyMedia() &&
             ($this->canDeleteOthersMedia() || $this->ownsMedia($media));
     }
 }

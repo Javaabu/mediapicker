@@ -26,6 +26,11 @@ return [
     'attachment_model' => \Javaabu\Mediapicker\Models\Attachment::class,
 
     /*
+     * Controller used to upload and manage media
+     */
+    'media_controller' => \Javaabu\Mediapicker\Http\Controllers\MediaController::class,
+
+    /*
      * Collection name to be used for media picker uploads
      */
     'collection_name' => 'mediapicker',
@@ -64,4 +69,40 @@ return [
      * The class that contains the strategy for determining how to remove files.
      */
     'file_remover_class' => \Javaabu\Mediapicker\FileRemover\AttachmentFileRemover::class,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default CSS Framework
+    |--------------------------------------------------------------------------
+    |
+    | This option controls the default CSS framework that will be used by the
+    | package when rendering views
+    |
+    | Supported: "material-admin-26"
+    |
+    */
+
+    'framework' => 'material-admin-26',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Layout
+    |--------------------------------------------------------------------------
+    |
+    | Default layout view for stats views
+    |
+    */
+
+    'default_layout' => 'layouts.admin',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scripts Stack
+    |--------------------------------------------------------------------------
+    |
+    | The name of the stack to push scripts
+    |
+    */
+
+    'scripts_stack' => 'scripts',
 ];

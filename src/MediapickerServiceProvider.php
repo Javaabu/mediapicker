@@ -28,7 +28,13 @@ class MediapickerServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'mediapicker-migrations');
+
+            $this->publishes([
+                __DIR__ . '/../resources/views' => resource_path('views/vendor/mediapicker'),
+            ], 'mediapicker-views');
         }
+
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'mediapicker');
 
         $attachmentClass = $this->getAttachmentClass();
         $attachmentObserverClass = config('mediapicker.attachment_observer', AttachmentObserver::class);

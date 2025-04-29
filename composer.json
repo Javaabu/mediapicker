@@ -10,6 +10,11 @@
     ],
     "authors": [
         {
+            "name": "Arushad Ahmed",
+            "email": "arushad@javaabu.com",
+            "role": "Developer"
+        },
+        {
             "name": "FlameXode",
             "email": "wovencoast14782@techie.com",
             "role": "Developer"
@@ -19,8 +24,9 @@
         "php": "^8.2",
         "illuminate/support": "^10.2 || ^11.0 || ^12.0",
         "spatie/laravel-medialibrary": "^11.12",
-        "javaabu/helpers": "^1.64",
-        "javaabu/activitylog": "^1.4"
+        "javaabu/helpers": "^1.65",
+        "javaabu/activitylog": "^1.4",
+        "javaabu/forms": "^1.38"
     },
     "require-dev": {
         "laravel/pint": "^1.14",

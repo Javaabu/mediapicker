@@ -29,6 +29,8 @@ interface MediaOwner extends HasMedia, Authorizable
 
     public function canCreateMedia(): bool;
 
+    public function canDeleteAnyMedia(): bool;
+
     public function canViewOthersMedia(): bool;
 
     public function canEditOthersMedia(): bool;
