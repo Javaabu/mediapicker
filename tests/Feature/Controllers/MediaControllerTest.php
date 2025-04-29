@@ -115,5 +115,85 @@ class MediaControllerTest extends TestCase
         ]);
     }
 
+    #[Test]
+    public function it_does_not_allow_viewing_media_index_page_for_unauthorized_users(): void
+    {
+        Gate::define('view_media', function (User $user) {
+            return false;
+        });
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user);
+
+        $media = $this->getMedia(user: $user);
+
+        $this->get('/media')
+            ->assertStatus(403)
+            ->assertDontSee($media->name);
+    }
+
+    #[Test]
+    public function it_does_not_show_other_users_media_to_unauthorized_users_on_the_index_page(): void
+    {
+        $this->withoutExceptionHandling();
+
+        Gate::define('view_media', function (User $user) {
+            return true;
+        });
+
+        Gate::define('view_others_media', function (User $user) {
+            return false;
+        });
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user);
+
+        $media = $this->getMedia(user: $user);
+
+        $other_user = User::factory()->create();
+
+
+        $other_file = $this->getTestImageEndingWithUnderscore();
+        $other_media = $this->getMedia($other_file, user: $other_user);
+
+        $this->get('/media')
+            ->assertSuccessful()
+            ->assertDontSee($other_media->name)
+            ->assertSee($media->name);
+    }
+
+    #[Test]
+    public function it_can_show_others_media_to_authorized_users_on_the_index_page(): void
+    {
+        $this->withoutExceptionHandling();
+
+        Gate::define('view_media', function (User $user) {
+            return true;
+        });
+
+        Gate::define('view_others_media', function (User $user) {
+            return true;
+        });
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user);
+
+        $media = $this->getMedia(user: $user);
+
+        $other_user = User::factory()->create();
+
+
+        $other_file = $this->getTestImageEndingWithUnderscore();
+        $other_media = $this->getMedia($other_file, user: $other_user);
+
+        $this->get('/media')
+            ->assertSuccessful()
+            ->assertSee($other_media->name)
+            ->assertSee($media->name);
+    }
+
 
 }

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
+use Javaabu\Forms\FormsServiceProvider;
 use Javaabu\Helpers\HelpersServiceProvider;
 use Javaabu\Mediapicker\Models\Attachment;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithConversions;
@@ -61,6 +62,7 @@ abstract class TestCase extends BaseTestCase
             TestServiceProvider::class,
             HelpersServiceProvider::class,
             SettingsServiceProvider::class,
+            FormsServiceProvider::class,
             ActivitylogServiceProvider::class,
         ];
     }
@@ -96,16 +98,18 @@ abstract class TestCase extends BaseTestCase
         return compact('width', 'height');
     }
 
-    protected function getUserWithMedia(string $file = '', string $name = ''): User
+    protected function getUserWithMedia(string $file = '', string $name = '', ?User $user = null): User
     {
         if (! $file) {
             $file = $this->getTestJpg();
         }
 
-        /** @var User $user */
-        $user = User::factory()->create([
-            'name' => $name ?: fake()->name,
-        ]);
+        if (! $user) {
+            /** @var User $user */
+            $user = User::factory()->create([
+                'name' => $name ?: fake()->name,
+            ]);
+        }
 
         $user->addMedia($file)
             ->preservingOriginal()
@@ -114,13 +118,13 @@ abstract class TestCase extends BaseTestCase
         return $user;
     }
 
-    protected function getMedia(string $file = ''): Media
+    protected function getMedia(string $file = '', ?User $user = null): Media
     {
         if (! $file) {
             $file = $this->getTestJpg();
         }
 
-        $user = $this->getUserWithMedia($file);
+        $user = $this->getUserWithMedia($file, user: $user);
 
         return $user->getFirstMedia('mediapicker');
     }
