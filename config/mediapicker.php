@@ -89,11 +89,22 @@ return [
     | Default Layout
     |--------------------------------------------------------------------------
     |
-    | Default layout view for stats views
+    | Default layout view for media library views
     |
     */
 
     'default_layout' => 'layouts.admin',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Picker Layout
+    |--------------------------------------------------------------------------
+    |
+    | Default layout view for picker modal views
+    |
+    */
+
+    'picker_layout' => 'layouts.admin-blank',
 
     /*
     |--------------------------------------------------------------------------

@@ -196,6 +196,37 @@ class MediaControllerTest extends TestCase
     }
 
     #[Test]
+    public function it_can_show_the_media_picker_page(): void
+    {
+        $this->withoutExceptionHandling();
+
+        Gate::define('view_media', function (User $user) {
+            return true;
+        });
+
+        Gate::define('view_others_media', function (User $user) {
+            return true;
+        });
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user);
+
+        $media = $this->getMedia(user: $user);
+
+        $other_user = User::factory()->create();
+
+
+        $other_file = $this->getTestImageEndingWithUnderscore();
+        $other_media = $this->getMedia($other_file, user: $other_user);
+
+        $this->get('/media?mode=picker')
+            ->assertSuccessful()
+            ->assertSee($other_media->name)
+            ->assertSee($media->name);
+    }
+
+    #[Test]
     public function it_can_show_the_create_media_page_for_authorized_users(): void
     {
         $this->withoutExceptionHandling();

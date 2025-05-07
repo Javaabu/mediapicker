@@ -1,4 +1,4 @@
-@extends('layouts.admin-blank')
+@extends(config('mediapicker.picker_layout'))
 
 @section('content')
 
