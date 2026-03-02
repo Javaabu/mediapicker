@@ -22,16 +22,16 @@
     ],
     "require": {
         "php": "^8.2",
-        "illuminate/support": "^10.2 || ^11.0 || ^12.0",
+        "illuminate/support": "^10.2 || ^11.0 || ^12.0 || ^13.0",
         "spatie/laravel-medialibrary": "^11.12",
-        "javaabu/helpers": "^1.65",
-        "javaabu/activitylog": "^1.4",
-        "javaabu/forms": "^1.38"
+        "javaabu/helpers": "^1.70",
+        "javaabu/activitylog": "^1.5",
+        "javaabu/forms": "^1.67"
     },
     "require-dev": {
         "laravel/pint": "^1.14",
-        "orchestra/testbench": "^8.0 || ^9.13 || ^10.0",
-        "phpunit/phpunit": "^10.5 || ^11.5.3"
+        "orchestra/testbench": "^8.0 || ^9.16 || ^10.0 || ^11.0",
+        "phpunit/phpunit": "^10.5 || ^11.5.3 || ^12.5.8 || ^13.0.3"
     },
     "autoload": {
         "psr-4": {
@@ -53,6 +53,12 @@
             ]
         }
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/javaabu/laravel-settings.git"
+        }
+    ],
     "minimum-stability": "dev",
     "prefer-stable": true
 }
