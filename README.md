@@ -12,7 +12,7 @@ Allow for file uploads from a persistent storage
 
 ## Documentation
 
-You'll find the documentation on [https://docs.javaabu.com/docs/mediapicker](https://docs.javaabu.com/docs/mediapicker).
+You'll find the documentation on [https://docs.javaabu.com/mediapicker](https://docs.javaabu.com/mediapicker).
 
 Find yourself stuck using the package? Found a bug? Do you have general questions or suggestions for improving this package? Feel free to create an [issue](../../issues) on GitHub, we'll try to address it as soon as possible.
 
