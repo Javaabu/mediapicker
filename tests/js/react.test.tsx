@@ -7,13 +7,27 @@ import { withDefaults } from "../../resources/js/strings"
 import type { MediaItem } from "../../resources/js/types"
 import { fakeClient, mediaItem } from "./support/fixtures"
 
-function Controlled({ multiple = false, initial = null }: { multiple?: boolean; initial?: MediaItem | MediaItem[] | null }) {
+function Controlled({
+  multiple = false,
+  initial = null,
+}: {
+  multiple?: boolean
+  initial?: MediaItem | MediaItem[] | null
+}) {
   const { client } = fakeClient([mediaItem({ id: 1 }), mediaItem({ id: 2 })])
   const [value, setValue] = useState<MediaItem | MediaItem[] | null>(initial)
 
   return (
     <form data-testid="form">
-      <MediaPicker name={multiple ? "gallery[]" : "featured"} multiple={multiple} value={value} onChange={setValue} url="/media" client={client} type="image" />
+      <MediaPicker
+        name={multiple ? "gallery[]" : "featured"}
+        multiple={multiple}
+        value={value}
+        onChange={setValue}
+        url="/media"
+        client={client}
+        type="image"
+      />
     </form>
   )
 }
@@ -22,9 +36,9 @@ const submitted = () => Array.from(new FormData(screen.getByTestId("form") as HT
 
 describe("MediaPicker", () => {
   it("chooses media in the library dialog", async () => {
-    render(<Controlled />)
+    const { container } = render(<Controlled />)
 
-    expect(screen.getByText("Nothing chosen")).toBeInTheDocument()
+    expect(container.querySelector(".mp-field__empty")).toHaveTextContent("Nothing chosen")
     expect(submitted()).toEqual([["featured", ""]])
 
     fireEvent.click(screen.getByRole("button", { name: /Choose/ }))
@@ -34,7 +48,7 @@ describe("MediaPicker", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Choose" }))
 
     await waitFor(() => expect(submitted()).toEqual([["featured", "2"]]))
-    expect(screen.getByText("ބީޗް 2")).toBeInTheDocument()
+    expect(container.querySelector(".mp-field__item .mp-name")).toHaveTextContent("ބީޗް 2")
   })
 
   it("reorders and removes several", () => {
@@ -50,7 +64,14 @@ describe("MediaPicker", () => {
 
 describe("MediaPickerField", () => {
   it("takes the library from the provider and shows a label", () => {
-    const config = { url: "/admin/media", types: [], accept: "image/*", max_size: 1024, crop_presets: [], strings: withDefaults({ choose: "ހޮވާ" }) }
+    const config = {
+      url: "/admin/media",
+      types: [],
+      accept: "image/*",
+      max_size: 1024,
+      crop_presets: [],
+      strings: withDefaults({ choose: "ހޮވާ" }),
+    }
 
     render(
       <MediapickerProvider config={config}>

@@ -30,7 +30,7 @@ class Assets
             ->dist('../dist')
             ->script('picker', 'js/blade/picker.ts')
             ->script('cropper', 'js/blade/cropper.ts')
-            ->script('blocks', 'js/blocks/index.ts', depends_on: ['picker'])
+            ->script('blocks', 'js/blocks/index.ts')
             ->npm([
                 '@javaabu/forms' => 'github:Javaabu/react-forms#next-gen',
                 '@javaabu/onu' => '^0.2.1',

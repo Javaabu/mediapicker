@@ -40,7 +40,10 @@ export interface LibraryClient {
   list(query?: LibraryQuery, signal?: AbortSignal): Promise<Paginated<MediaItem>>
   find(id: number | string): Promise<MediaItem>
   upload(file: File, options?: UploadOptions): Promise<MediaItem>
-  update(id: number | string, details: Partial<Pick<MediaItem, "name" | "description" | "alt" | "caption">>): Promise<MediaItem>
+  update(
+    id: number | string,
+    details: Partial<Pick<MediaItem, "name" | "description" | "alt" | "caption">>,
+  ): Promise<MediaItem>
   crop(id: number | string, preset: string, crop: Omit<Crop, "rotation"> & { rotation?: number }): Promise<MediaItem>
   destroy(id: number | string): Promise<void>
 }
@@ -50,7 +53,8 @@ export function csrfHeaders(): Record<string, string> {
   const cookie = typeof document === "undefined" ? null : document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/)
   if (cookie?.[1]) return { "X-XSRF-TOKEN": decodeURIComponent(cookie[1]) }
 
-  const meta = typeof document === "undefined" ? null : document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+  const meta =
+    typeof document === "undefined" ? null : document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
   return meta?.content ? { "X-CSRF-TOKEN": meta.content } : {}
 }
 
@@ -81,7 +85,10 @@ async function failure(response: Response): Promise<LibraryError> {
  * A client for a library's JSON API: the URL of its index route, e.g. `/admin/media`.
  * The pickers, the editor blocks and the React components all use it.
  */
-export function createLibraryClient(baseUrl: string, fetcher: typeof fetch = (...args) => fetch(...args)): LibraryClient {
+export function createLibraryClient(
+  baseUrl: string,
+  fetcher: typeof fetch = (...args) => fetch(...args),
+): LibraryClient {
   const base = baseUrl.replace(/\/+$/, "")
   const headers = () => ({ Accept: "application/json", "X-Requested-With": "XMLHttpRequest", ...csrfHeaders() })
 
@@ -89,7 +96,11 @@ export function createLibraryClient(baseUrl: string, fetcher: typeof fetch = (..
     const response = await fetcher(url, {
       credentials: "same-origin",
       ...init,
-      headers: { ...headers(), ...(init.body && !(init.body instanceof FormData) ? { "Content-Type": "application/json" } : {}), ...(init.headers ?? {}) },
+      headers: {
+        ...headers(),
+        ...(init.body && !(init.body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
+        ...(init.headers ?? {}),
+      },
     })
     if (!response.ok) throw await failure(response)
     if (response.status === 204) return undefined as T
@@ -138,7 +149,13 @@ export function createLibraryClient(baseUrl: string, fetcher: typeof fetch = (..
             options.onProgress?.(1)
             resolve(body.data)
           } else {
-            reject(new LibraryError(body.message || request.statusText || "Upload failed", request.status, body.errors ?? {}))
+            reject(
+              new LibraryError(
+                body.message || request.statusText || "Upload failed",
+                request.status,
+                body.errors ?? {},
+              ),
+            )
           }
         }
         request.onerror = () => reject(new LibraryError("Upload failed", 0))

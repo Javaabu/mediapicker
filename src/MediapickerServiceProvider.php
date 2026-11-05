@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Javaabu\BlockEditor\Facades\BlockEditor;
 use Javaabu\Manifest\Concerns\RegistersAssets;
 use Javaabu\Manifest\Package;
 use Javaabu\Mediapicker\Assets\Assets;
@@ -53,6 +54,7 @@ class MediapickerServiceProvider extends ServiceProvider
 
         $this->registerObservers();
         $this->registerListeners();
+        $this->registerBlocks();
         $this->registerComponents();
         $this->registerRouteMacros();
         $this->registerPermissions();
@@ -74,6 +76,19 @@ class MediapickerServiceProvider extends ServiceProvider
         $media_observer = config('mediapicker.media_observer', MediaObserver::class);
 
         $media_class::observe(new $media_observer);
+    }
+
+    /**
+     * The image (replacing the core URL image), gallery, file and mediaVideo blocks of
+     * javaabu/block-editor
+     */
+    protected function registerBlocks(): void
+    {
+        if (! config('mediapicker.blocks', true) || ! class_exists(BlockEditor::class)) {
+            return;
+        }
+
+        BlockEditor::register(Blocks\Image::class, Blocks\Gallery::class, Blocks\File::class, Blocks\MediaVideo::class);
     }
 
     protected function registerListeners(): void

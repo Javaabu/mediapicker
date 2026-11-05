@@ -23,7 +23,13 @@ const PickerConfigContext = createContext<PickerConfig | null>(null)
  * <MediapickerProvider config={usePage().props.mediapicker}>…</MediapickerProvider>
  * ```
  */
-export function MediapickerProvider({ config, children }: { config: PickerConfig | null | undefined; children: ReactNode }) {
+export function MediapickerProvider({
+  config,
+  children,
+}: {
+  config: PickerConfig | null | undefined
+  children: ReactNode
+}) {
   return <PickerConfigContext.Provider value={config ?? null}>{children}</PickerConfigContext.Provider>
 }
 

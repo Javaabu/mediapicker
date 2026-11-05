@@ -158,7 +158,9 @@ class MediaPickerDialog {
 
     const filters: HTMLElement[] = [h("label", { class: "mp-search" }, icon("search"), search)]
 
-    const typeOptions = (this.options.types ?? []).filter((type) => !this.types.length || this.types.includes(type.value))
+    const typeOptions = (this.options.types ?? []).filter(
+      (type) => !this.types.length || this.types.includes(type.value),
+    )
     if (typeOptions.length > 1) {
       const select = h(
         "select",
@@ -254,7 +256,9 @@ class MediaPickerDialog {
     this.list.replaceChildren(...this.items.map((item) => this.item(item)))
 
     if (!this.items.length) {
-      this.list.append(h("p", { class: "mp-empty" }, this.t(this.search || this.typeFilter ? "no_matching_media" : "no_media")))
+      this.list.append(
+        h("p", { class: "mp-empty" }, this.t(this.search || this.typeFilter ? "no_matching_media" : "no_media")),
+      )
     }
 
     this.more.hidden = this.page >= this.lastPage

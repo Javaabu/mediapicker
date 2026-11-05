@@ -95,7 +95,14 @@ describe("openMediaPicker", () => {
 
 describe("the Blade picker field", () => {
   function field(config: Partial<PickerFieldConfig>) {
-    const full: PickerFieldConfig = { name: "gallery[]", multiple: true, type: ["image"], url: "/media", value: [], ...config }
+    const full: PickerFieldConfig = {
+      name: "gallery[]",
+      multiple: true,
+      type: ["image"],
+      url: "/media",
+      value: [],
+      ...config,
+    }
     document.body.innerHTML = `
       <form>
         <div class="mp-field" data-mediapicker-field='${JSON.stringify(full).replace(/'/g, "&#39;")}'>

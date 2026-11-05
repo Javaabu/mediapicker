@@ -17,6 +17,8 @@ export default defineConfig({
     environment: "jsdom",
     include: ["tests/js/**/*.test.{ts,tsx}"],
     setupFiles: ["tests/js/setup.ts"],
+    // Onu's media components import their libraries' CSS; let Vite process it
+    server: { deps: { inline: [/@javaabu\/onu/, /yet-another-react-lightbox/, /media-chrome/] } },
     coverage: {
       provider: "v8",
       include: ["resources/js/**/*.{ts,tsx}"],

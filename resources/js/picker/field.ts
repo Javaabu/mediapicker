@@ -37,8 +37,12 @@ export class PickerField {
   ) {
     this.value = config.value ?? []
     this.t = translator(config.strings)
-    this.items = element.querySelector<HTMLUListElement>(".mp-field__items") ?? element.appendChild(h("ul", { class: "mp-field__items" }))
-    this.inputs = element.querySelector<HTMLElement>(".mp-field__inputs") ?? element.appendChild(h("div", { class: "mp-field__inputs" }))
+    this.items =
+      element.querySelector<HTMLUListElement>(".mp-field__items") ??
+      element.appendChild(h("ul", { class: "mp-field__items" }))
+    this.inputs =
+      element.querySelector<HTMLElement>(".mp-field__inputs") ??
+      element.appendChild(h("div", { class: "mp-field__inputs" }))
     this.clear = element.querySelector<HTMLButtonElement>("[data-mp-clear]")
 
     element.querySelector<HTMLButtonElement>("[data-mp-choose]")?.addEventListener("click", () => void this.choose())

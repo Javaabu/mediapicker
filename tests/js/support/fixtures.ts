@@ -36,7 +36,16 @@ export function page(items: MediaItem[], current = 1, last = 1): Paginated<Media
   return {
     data: items,
     links: { first: null, last: null, prev: null, next: null },
-    meta: { current_page: current, last_page: last, per_page: 24, total: items.length, from: 1, to: items.length, path: "/media", links: [] },
+    meta: {
+      current_page: current,
+      last_page: last,
+      per_page: 24,
+      total: items.length,
+      from: 1,
+      to: items.length,
+      path: "/media",
+      links: [],
+    },
   }
 }
 

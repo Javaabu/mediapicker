@@ -37,7 +37,9 @@ export default function Create(props: MediaCreateProps) {
         .catch((error: unknown) =>
           update(key, {
             error:
-              error instanceof LibraryError ? (Object.values(error.errors)[0]?.[0] ?? error.message) : t("upload_failed"),
+              error instanceof LibraryError
+                ? (Object.values(error.errors)[0]?.[0] ?? error.message)
+                : t("upload_failed"),
           }),
         )
     }
@@ -66,7 +68,9 @@ export default function Create(props: MediaCreateProps) {
       >
         <Icon name="upload" className="mp-icon h-8 w-8" />
         <p>{t("drop_files")}</p>
-        <p className="text-sm text-muted-foreground">{t("max_size", { size: formatBytes(props.upload.max_size * 1024) })}</p>
+        <p className="text-sm text-muted-foreground">
+          {t("max_size", { size: formatBytes(props.upload.max_size * 1024) })}
+        </p>
         <Button type="button" onClick={() => input.current?.click()}>
           {t("choose_files")}
         </Button>
@@ -98,7 +102,12 @@ export default function Create(props: MediaCreateProps) {
                   {t("edit")}
                 </Link>
               ) : (
-                <progress className="mp-progress" max={100} value={Math.round(row.progress * 100)} aria-label={row.name} />
+                <progress
+                  className="mp-progress"
+                  max={100}
+                  value={Math.round(row.progress * 100)}
+                  aria-label={row.name}
+                />
               )}
             </li>
           ))}

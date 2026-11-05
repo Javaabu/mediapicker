@@ -20,7 +20,16 @@ export interface MediaPickerFieldProps extends Omit<MediaPickerProps, "url" | "n
  * `MediaPicker` in a form group, with its label, help and validation errors (including
  * `name.0`, …). Bind it by hand with `value` / `onChange` (see Javaabu/react-forms#23).
  */
-export function MediaPickerField({ name, label, help, required, url, crop = null, multiple = false, ...props }: MediaPickerFieldProps) {
+export function MediaPickerField({
+  name,
+  label,
+  help,
+  required,
+  url,
+  crop = null,
+  multiple = false,
+  ...props
+}: MediaPickerFieldProps) {
   const config = usePickerConfig()
   const errors = useFieldErrors(name)
   const id = `${name.replace(/[[\].]+/g, "_")}_picker`

@@ -48,7 +48,11 @@ export default function Index(props: MediaIndexProps) {
 
   const bulkDelete = () => {
     if (!deletable.length || !window.confirm(t("delete_many_confirm"))) return
-    router.put(urls.bulk, { action: "delete", media: deletable }, { preserveScroll: true, onSuccess: () => setSelected([]) })
+    router.put(
+      urls.bulk,
+      { action: "delete", media: deletable },
+      { preserveScroll: true, onSuccess: () => setSelected([]) },
+    )
   }
 
   const sort = `${filters.orderby}:${filters.order}`

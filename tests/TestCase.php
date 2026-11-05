@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Inertia\ServiceProvider as InertiaServiceProvider;
+use Javaabu\BlockEditor\BlockEditorServiceProvider;
 use Javaabu\Forms\FormsServiceProvider;
 use Javaabu\Manifest\ManifestServiceProvider;
 use Javaabu\Mediapicker\MediapickerServiceProvider;
@@ -59,6 +60,7 @@ abstract class TestCase extends BaseTestCase
             ManifestServiceProvider::class,
             FormsServiceProvider::class,
             StencilServiceProvider::class,
+            BlockEditorServiceProvider::class,
             MediaLibraryServiceProvider::class,
             InertiaServiceProvider::class,
             MediapickerServiceProvider::class,

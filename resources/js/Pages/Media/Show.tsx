@@ -25,7 +25,9 @@ export default function Show(props: MediaShowProps) {
     router.delete(urls.destroy)
   }
 
-  const uploaded = media.created_at ? new Date(media.created_at).toLocaleString(document.documentElement.lang || undefined) : null
+  const uploaded = media.created_at
+    ? new Date(media.created_at).toLocaleString(document.documentElement.lang || undefined)
+    : null
 
   return (
     <div className="mp-library flex flex-col gap-6" data-mediapicker>

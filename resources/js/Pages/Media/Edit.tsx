@@ -57,7 +57,13 @@ export default function Edit(props: MediaEditProps) {
 
       {media.type === "image" && props.crop_presets.length && props.can.update ? (
         <Card title={t("crops")} subtitle={t("crop_help")}>
-          <MediaCropper url={props.urls.index} media={media} presets={props.crop_presets} strings={props.strings} onCropped={setMedia} />
+          <MediaCropper
+            url={props.urls.index}
+            media={media}
+            presets={props.crop_presets}
+            strings={props.strings}
+            onCropped={setMedia}
+          />
         </Card>
       ) : null}
     </div>

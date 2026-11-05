@@ -1,6 +1,6 @@
 import { Alert, Button, Modal } from "@javaabu/forms"
 import { MediaLister, type MediaItem as ListerItem } from "@javaabu/onu"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 
 import type { LibraryClient } from "../api"
 import { defaultTitle } from "../picker/dialog"
@@ -68,20 +68,25 @@ export function MediaLibraryDialog({
 }: MediaLibraryDialogProps) {
   const t = useMemo(() => translator(strings), [strings])
   const library = useLibrary({ url, type, enabled: open, client })
-  const [chosen, setChosen] = useState<Map<number, MediaItem>>(new Map())
+  const [chosen, setChosen] = useState<Map<number, MediaItem>>(() => new Map(selected.map((item) => [item.id, item])))
   const [cropping, setCropping] = useState<File[]>([])
   const fileInput = useRef<HTMLInputElement>(null)
   const limited = useMemo(() => (type ? (Array.isArray(type) ? type : [type]) : []), [type])
 
-  useEffect(() => {
+  // Start from the field's value each time the dialog opens
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
     if (open) setChosen(new Map(selected.map((item) => [item.id, item])))
-    // only when the dialog opens
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
+  }
 
   const select = (ids: Array<string | number>) => {
     const byId = new Map([...library.items, ...chosen.values()].map((item) => [item.id, item]))
-    setChosen(new Map(ids.map((id) => [Number(id), byId.get(Number(id))]).filter((entry): entry is [number, MediaItem] => !!entry[1])))
+    setChosen(
+      new Map(
+        ids.map((id) => [Number(id), byId.get(Number(id))]).filter((entry): entry is [number, MediaItem] => !!entry[1]),
+      ),
+    )
   }
 
   const add = (media: MediaItem | null) => {

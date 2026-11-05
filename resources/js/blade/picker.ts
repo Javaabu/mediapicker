@@ -19,7 +19,12 @@ declare global {
   }
 }
 
-window.Mediapicker = { ...(window.Mediapicker ?? {}), open: openMediaPicker, mount: mountPickerFields, field: pickerField }
+window.Mediapicker = {
+  ...(window.Mediapicker ?? {}),
+  open: openMediaPicker,
+  mount: mountPickerFields,
+  field: pickerField,
+}
 
 onReady(() => {
   mountPickerFields()

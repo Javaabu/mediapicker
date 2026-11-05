@@ -64,7 +64,11 @@ export class CropperWidget {
 
     element.classList.add("mp-cropper")
     element.replaceChildren(
-      h("div", { class: "mp-cropper__presets", role: "group", "aria-label": this.t("aspect_ratio") }, ...this.presetButtons),
+      h(
+        "div",
+        { class: "mp-cropper__presets", role: "group", "aria-label": this.t("aspect_ratio") },
+        ...this.presetButtons,
+      ),
       h("div", { class: "mp-cropper__stage" }, this.image),
       h(
         "div",
@@ -91,7 +95,9 @@ export class CropperWidget {
   /** Switch to another preset: its aspect ratio and its saved crop. */
   choose(preset: CropPreset): void {
     this.preset = preset
-    this.presetButtons.forEach((button) => button.setAttribute("aria-pressed", button.dataset.preset === preset.name ? "true" : "false"))
+    this.presetButtons.forEach((button) =>
+      button.setAttribute("aria-pressed", button.dataset.preset === preset.name ? "true" : "false"),
+    )
     this.cropper?.setAspectRatio(preset.aspect ?? NaN)
     this.applySavedCrop()
     this.describe()
@@ -118,7 +124,9 @@ export class CropperWidget {
       const media = await this.client.crop(this.config.media.id, this.preset.name, this.currentCrop())
       this.crops = { ...media.crops }
       this.status.textContent = this.t("saved")
-      this.element.dispatchEvent(new CustomEvent("mediapicker:cropped", { bubbles: true, detail: { media, preset: this.preset.name } }))
+      this.element.dispatchEvent(
+        new CustomEvent("mediapicker:cropped", { bubbles: true, detail: { media, preset: this.preset.name } }),
+      )
       return media
     } catch {
       this.status.textContent = this.t("error")

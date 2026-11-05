@@ -24,7 +24,12 @@ export function MediaPreview({ media, className = "" }: { media: MediaItem; clas
   }
 
   return (
-    <a href={media.url} target="_blank" rel="noreferrer" className={`flex items-center gap-3 rounded-md border p-4 ${className}`}>
+    <a
+      href={media.url}
+      target="_blank"
+      rel="noreferrer"
+      className={`flex items-center gap-3 rounded-md border p-4 ${className}`}
+    >
       <Icon name={media.icon} className="mp-icon h-8 w-8" />
       <bdi>{media.file_name}</bdi>
     </a>
