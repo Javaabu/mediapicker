@@ -6,13 +6,11 @@ use Illuminate\Console\Command;
 use Illuminate\Console\ConfirmableTrait;
 use Illuminate\Contracts\Filesystem\Factory;
 use Illuminate\Support\LazyCollection;
-use Illuminate\Support\Str;
 use Javaabu\Mediapicker\AttachmentCollections\AttachmentRepository;
 use Javaabu\Mediapicker\Contracts\Attachment;
-use Javaabu\Mediapicker\Conversions\AttachmentConversionCollection;
 use Javaabu\Mediapicker\Conversions\MediaManipulator;
+use Javaabu\Mediapicker\Conversions\StaleConversions;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Spatie\MediaLibrary\Support\PathGenerator\PathGeneratorFactory;
 
 class AttachmentsCleanCommand extends Command
 {
@@ -119,54 +117,33 @@ class AttachmentsCleanCommand extends Command
         return $this->attachmentRepository->getOrphans();
     }
 
+    /**
+     * Remove the attachment conversion files of the selected attachments' media that no
+     * attachment of that media uses any more
+     */
     protected function deleteFilesGeneratedForDeprecatedConversions(): void
     {
-        $this->getAttachmentItems()->each(function (Attachment $attachment) {
-            $this->deleteConversionFilesForDeprecatedConversions($attachment);
+        $stale_conversions = app(StaleConversions::class);
+        $seen = [];
+
+        $this->getAttachmentItems()->each(function (Attachment $attachment) use ($stale_conversions, &$seen) {
+            $media = $attachment->media;
+
+            if (! $media || isset($seen[$media->getKey()])) {
+                return;
+            }
+
+            $seen[$media->getKey()] = true;
+
+            $files = $this->isDryRun ? $stale_conversions->find($media) : $stale_conversions->clean($media);
+
+            foreach ($files as $file) {
+                $this->info("Deprecated conversion file `{$file}` " . ($this->isDryRun ? 'found' : 'has been removed'));
+            }
 
             if ($this->rateLimit) {
                 usleep((1 / $this->rateLimit) * 1_000_000 * 2);
             }
         });
-    }
-
-    protected function deleteConversionFilesForDeprecatedConversions(Attachment $attachment): void
-    {
-        $conversionFilePaths = AttachmentConversionCollection::createForAttachment($attachment)->getConversionsFiles($attachment->collection_name);
-
-        $media = $attachment->media;
-        $conversionPath = PathGeneratorFactory::create($media)->getPathForConversions($media);
-        $currentFilePaths = $this->fileSystem->disk($media->disk)->files($conversionPath);
-
-        collect($currentFilePaths)
-            ->reject(fn (string $currentFilePath) => $conversionFilePaths->contains(basename($currentFilePath)))
-            ->reject(fn (string $currentFilePath) => $media->file_name === basename($currentFilePath))
-            ->each(function (string $currentFilePath) use ($media) {
-                if (! $this->isDryRun) {
-                    $this->fileSystem->disk($media->disk)->delete($currentFilePath);
-
-                    $this->markConversionAsRemoved($media, $currentFilePath);
-                }
-
-                $this->info("Deprecated conversion file `{$currentFilePath}` " . ($this->isDryRun ? 'found' : 'has been removed'));
-            });
-    }
-
-    protected function markConversionAsRemoved(Media $media, string $conversionPath): void
-    {
-        $conversionFile = pathinfo($conversionPath, PATHINFO_FILENAME);
-
-        $generatedConversionName = null;
-
-        $media->getGeneratedConversions()
-            ->dot()
-            ->filter(
-                fn (bool $isGenerated, string $generatedConversionName) => Str::contains($conversionFile, $generatedConversionName)
-            )
-            ->each(
-                fn (bool $isGenerated, string $conversionName) => $media->markAsConversionNotGenerated($conversionName)
-            );
-
-        $media->save();
     }
 }

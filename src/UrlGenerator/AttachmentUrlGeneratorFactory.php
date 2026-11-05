@@ -3,36 +3,44 @@
 namespace Javaabu\Mediapicker\UrlGenerator;
 
 use Javaabu\Mediapicker\Contracts\Attachment;
-use Javaabu\Mediapicker\Conversions\AttachmentConversionCollection;
+use Spatie\MediaLibrary\Conversions\Conversion;
 use Spatie\MediaLibrary\Support\PathGenerator\PathGeneratorFactory;
 use Spatie\MediaLibrary\Support\UrlGenerator\UrlGenerator;
 use Spatie\MediaLibrary\Support\UrlGenerator\UrlGeneratorFactory;
 
+/**
+ * spatie's URL generator, for an attachment's media and one of its attachment conversions
+ */
 class AttachmentUrlGeneratorFactory extends UrlGeneratorFactory
 {
     public static function createForAttachment(Attachment $attachment, string $conversionName = ''): UrlGenerator
     {
+        $conversion = $conversionName !== ''
+            ? ($attachment->conversion($conversionName) ?? $attachment->conversions()->getByName($conversionName))
+            : null;
+
+        return static::createForConversion($attachment, $conversion);
+    }
+
+    public static function createForConversion(Attachment $attachment, ?Conversion $conversion = null): UrlGenerator
+    {
         $media = $attachment->media;
 
-        $urlGeneratorClass = config('media-library.url_generator');
+        $url_generator_class = config('media-library.url_generator');
 
-        static::guardAgainstInvalidUrlGenerator($urlGeneratorClass);
+        static::guardAgainstInvalidUrlGenerator($url_generator_class);
 
-        /** @var UrlGenerator $urlGenerator */
-        $urlGenerator = app($urlGeneratorClass);
+        /** @var UrlGenerator $url_generator */
+        $url_generator = app($url_generator_class);
 
-        $pathGenerator = PathGeneratorFactory::create($media);
-
-        $urlGenerator
+        $url_generator
             ->setMedia($media)
-            ->setPathGenerator($pathGenerator);
+            ->setPathGenerator(PathGeneratorFactory::create($media));
 
-        if ($conversionName !== '') {
-            $conversion = AttachmentConversionCollection::createForAttachment($attachment)->getByName($conversionName);
-
-            $urlGenerator->setConversion($conversion);
+        if ($conversion) {
+            $url_generator->setConversion($conversion);
         }
 
-        return $urlGenerator;
+        return $url_generator;
     }
 }

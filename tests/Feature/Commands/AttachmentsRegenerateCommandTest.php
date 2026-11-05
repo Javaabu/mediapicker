@@ -22,7 +22,7 @@ class AttachmentsRegenerateCommandTest extends TestCase
 
         $path = $model->getFirstAttachmentPath(conversionName: 'test');
 
-        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path);
+        $this->assertStringContainsString('/conversions/attachments/test-test-', $path);
 
         File::delete($path);
         $this->assertFileDoesNotExist($path);
@@ -53,8 +53,8 @@ class AttachmentsRegenerateCommandTest extends TestCase
         $path_1 = $model->getFirstAttachmentPath(conversionName: 'test');
         $path_2 = $model->getFirstAttachmentPath(conversionName: 'test2');
 
-        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path_1);
-        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test2.jpg'), $path_2);
+        $this->assertStringContainsString('/conversions/attachments/test-test-', $path_1);
+        $this->assertStringContainsString('/conversions/attachments/test-test2-', $path_2);
 
         File::delete($path_1);
         File::delete($path_2);

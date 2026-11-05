@@ -14,6 +14,7 @@ use Javaabu\Mediapicker\AttachmentCollections\MediaAdder;
 use Javaabu\Mediapicker\Models\Attachment;
 use Javaabu\Mediapicker\Models\Media;
 use Javaabu\Mediapicker\Tests\TestCase;
+use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithIdenticalConversions;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\Post;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\MediaLibrary\Conversions\Conversion;
@@ -579,13 +580,14 @@ class InteractsWithAttachmentsTest extends TestCase
 
         $media = $this->getMedia();
 
-        $attachment = $model->addAttachment($media)
+        $model->addAttachment($media)
             ->toAttachmentCollection();
 
         $path = $model->getFirstAttachmentPath(conversionName: 'test');
 
-        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path);
+        $this->assertMatchesRegularExpression('#/' . $media->getKey() . '/conversions/attachments/test-test-[0-9a-f]{10}\.jpg$#', $path);
         $this->assertFileExists($path);
+        $this->assertEquals(['width' => 100, 'height' => 100], $this->getImageDimensions($path));
     }
 
     #[Test]
@@ -600,44 +602,50 @@ class InteractsWithAttachmentsTest extends TestCase
 
         $path = $model->getFirstAttachmentPath(conversionName: 'test');
 
-        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path);
-        $this->assertDirectoryExists($this->getMediaDirectory($media->getKey()));
         $this->assertFileExists($path);
 
         $media->delete();
 
         $this->assertFileDoesNotExist($path);
-
         $this->assertDirectoryDoesNotExist($this->getMediaDirectory($media->getKey()));
     }
 
     #[Test]
-    public function it_reuses_conversions_from_other_models(): void
+    public function it_shares_the_files_of_identical_conversions_of_different_models(): void
+    {
+        $model = $this->getModelWithConversions();
+        $model_2 = ModelWithIdenticalConversions::factory()->create();
+
+        $media = $this->getMedia();
+
+        $model->addAttachment($media)->toAttachmentCollection();
+
+        $path = $model->getFirstAttachmentPath(conversionName: 'test');
+        $modified = filemtime($path);
+
+        $model_2->addAttachment($media)->toAttachmentCollection();
+
+        $this->assertEquals($path, $model_2->getFirstAttachmentPath(conversionName: 'test'));
+        $this->assertEquals($modified, filemtime($path));
+        $this->assertCount(1, glob($this->getMediaDirectory($media->getKey() . '/conversions/attachments/*')));
+    }
+
+    #[Test]
+    public function it_keeps_same_named_conversions_of_different_models_apart(): void
     {
         $model = $this->getModelWithConversions();
         $model_2 = $this->getModelWithSameConversions();
 
         $media = $this->getMedia();
 
-        $attachment = $model->addAttachment($media)
-            ->toAttachmentCollection();
+        $model->addAttachment($media)->toAttachmentCollection();
+        $model_2->addAttachment($media)->toAttachmentCollection();
 
         $path = $model->getFirstAttachmentPath(conversionName: 'test');
-
-        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path);
-        $this->assertFileExists($path);
-
-        $file_hash = hash_file('sha256', $path);
-
-        $attachment_2 = $model_2->addAttachment($media)
-            ->toAttachmentCollection();
-
         $path_2 = $model_2->getFirstAttachmentPath(conversionName: 'test');
 
-        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path_2);
-        $this->assertFileExists($path_2);
-
-        $file_hash_2 = hash_file('sha256', $path_2);
-        $this->assertEquals($file_hash, $file_hash_2);
+        $this->assertNotEquals($path, $path_2);
+        $this->assertEquals(['width' => 100, 'height' => 100], $this->getImageDimensions($path));
+        $this->assertEquals(['width' => 50, 'height' => 50], $this->getImageDimensions($path_2));
     }
 }

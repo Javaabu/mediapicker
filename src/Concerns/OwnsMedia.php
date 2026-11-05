@@ -44,6 +44,7 @@ trait OwnsMedia
             ->height(250)
             ->fit(Fit::Crop, 250, 250)
             ->keepOriginalImageFormat()
+            ->nonQueued()
             ->shouldBePerformedOn($this->getMediapickerCollectionName());
     }
 

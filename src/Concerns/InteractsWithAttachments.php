@@ -16,6 +16,7 @@ use Javaabu\Mediapicker\AttachmentCollections\MediaAdder;
 use Javaabu\Mediapicker\AttachmentCollections\MediaAdderFactory;
 use Javaabu\Mediapicker\Contracts\Attachment;
 use Javaabu\Mediapicker\Contracts\HasAttachments;
+use Javaabu\Mediapicker\Conversions\AttachmentConversion;
 use Javaabu\Mediapicker\Mediapicker;
 use Spatie\MediaLibrary\Conversions\Conversion;
 use Spatie\MediaLibrary\MediaCollections\MediaCollection;
@@ -421,9 +422,9 @@ trait InteractsWithAttachments
     /*
      * Add a conversion.
      */
-    public function addAttachmentConversion(string $name): Conversion
+    public function addAttachmentConversion(string $name): AttachmentConversion
     {
-        $conversion = Conversion::create($name);
+        $conversion = AttachmentConversion::create($name);
 
         $this->attachmentConversions[] = $conversion;
 

@@ -2,12 +2,16 @@
 
 namespace Javaabu\Mediapicker;
 
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Javaabu\Mediapicker\AttachmentCollections\AttachmentRepository;
 use Javaabu\Mediapicker\Commands\AttachmentsCleanCommand;
 use Javaabu\Mediapicker\Commands\AttachmentsClearCommand;
 use Javaabu\Mediapicker\Commands\AttachmentsRegenerateCommand;
+use Javaabu\Mediapicker\Events\MediaCropped;
+use Javaabu\Mediapicker\Listeners\RegenerateCroppedConversions;
 use Javaabu\Mediapicker\Models\Attachment;
 use Javaabu\Mediapicker\Models\Observers\AttachmentObserver;
 use Javaabu\Mediapicker\Models\Observers\MediaObserver;
@@ -41,6 +45,8 @@ class MediapickerServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'mediapicker');
 
         $this->registerObservers();
+        $this->registerListeners();
+        $this->registerComponents();
         $this->registerRouteMacros();
         $this->registerPermissions();
 
@@ -61,6 +67,19 @@ class MediapickerServiceProvider extends ServiceProvider
         $media_observer = config('mediapicker.media_observer', MediaObserver::class);
 
         $media_class::observe(new $media_observer);
+    }
+
+    protected function registerListeners(): void
+    {
+        Event::listen(MediaCropped::class, RegenerateCroppedConversions::class);
+    }
+
+    /**
+     * <x-mediapicker::image>, and the picker field
+     */
+    protected function registerComponents(): void
+    {
+        Blade::componentNamespace('Javaabu\\Mediapicker\\Views\\Components', 'mediapicker');
     }
 
     protected function registerRouteMacros(): void

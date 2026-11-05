@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
 use Javaabu\Mediapicker\AttachmentCollections\Exceptions\AttachmentCannotBeDeleted;
 use Javaabu\Mediapicker\AttachmentCollections\Exceptions\AttachmentCannotBeUpdated;
 use Javaabu\Mediapicker\AttachmentCollections\MediaAdder;
-use Spatie\MediaLibrary\Conversions\Conversion;
+use Javaabu\Mediapicker\Conversions\AttachmentConversion;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 interface HasAttachments
@@ -146,7 +146,7 @@ interface HasAttachments
     /*
      * Add a conversion.
      */
-    public function addAttachmentConversion(string $name): Conversion;
+    public function addAttachmentConversion(string $name): AttachmentConversion;
 
     /*
      * Register the attachment conversions.
