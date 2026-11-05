@@ -17,7 +17,7 @@
                 @endcan
             </x-forms::table.cell>
             <x-forms::table.cell>
-                <a href="{{ $media->url($can_update ? 'edit' : 'show') }}" class="flex items-center gap-3">
+                <a href="{{ $media->libraryUrl($can_update ? 'edit' : 'show') }}" class="flex items-center gap-3">
                     <span class="inline-block w-10">@include('mediapicker::media.partials.thumb')</span>
                     <bdi>{{ $media->name }}</bdi>
                 </a>

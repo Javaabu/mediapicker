@@ -3,7 +3,7 @@
         @php($can_update = auth()->user()?->can('update', $media))
         @php($can_delete = auth()->user()?->can('delete', $media))
         <li class="mp-item" data-id="{{ $media->id }}">
-            <a href="{{ $media->url($can_update ? 'edit' : 'show') }}" class="flex flex-col gap-1">
+            <a href="{{ $media->libraryUrl($can_update ? 'edit' : 'show') }}" class="flex flex-col gap-1">
                 @include('mediapicker::media.partials.thumb')
                 <span class="mp-name" dir="auto" title="{{ $media->name }}">{{ $media->name }}</span>
             </a>

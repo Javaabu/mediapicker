@@ -2,6 +2,7 @@
 
 namespace Javaabu\Mediapicker\Tests\TestSupport\Models;
 
+use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class ModelWithConversions extends Post
@@ -9,8 +10,6 @@ class ModelWithConversions extends Post
     public function registerAttachmentConversions(?Media $media = null)
     {
         $this->addAttachmentConversion('test')
-            ->width(100)
-            ->height(100)
-            ->crop(100, 100);
+            ->fit(Fit::Crop, 100, 100);
     }
 }

@@ -197,13 +197,13 @@ class Media extends BaseMedia
      * A URL of the library pages for this media: `index`, `create`, `show`, `edit`, `update`,
      * `destroy`. Uses the routes of the current request's library, else the default library.
      */
-    public function url(string $action, ?BaseMedia $media = null): string
+    public function libraryUrl(string $action = 'show'): string
     {
-        return Mediapicker::url($action, $media ?: $this);
+        return Mediapicker::url($action, $this);
     }
 
     protected function getAdminUrlAttribute(): string
     {
-        return $this->url('show');
+        return $this->libraryUrl('show');
     }
 }

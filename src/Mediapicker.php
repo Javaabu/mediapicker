@@ -9,9 +9,11 @@ use InvalidArgumentException;
 use Javaabu\Mediapicker\Contracts\Attachment;
 use Javaabu\Mediapicker\Http\Controllers\MediaController;
 use Javaabu\Mediapicker\Models\Media;
+use Javaabu\Mediapicker\Models\Translatable\Media as TranslatableMedia;
 use Javaabu\Mediapicker\Routing\MediapickerRoutes;
 use Javaabu\Mediapicker\Support\ImageData;
 use Javaabu\Mediapicker\Support\PickerConfig;
+use Javaabu\Mediapicker\Support\Translations;
 use Spatie\MediaLibrary\MediaCollections\Models\Media as BaseMedia;
 
 class Mediapicker
@@ -53,7 +55,11 @@ class Mediapicker
      */
     public static function mediaModel(): string
     {
-        return config('mediapicker.media_model', Media::class);
+        if ($model = config('mediapicker.media_model')) {
+            return $model;
+        }
+
+        return Translations::enabled() ? TranslatableMedia::class : Media::class;
     }
 
     public static function newMediaInstance(): Media

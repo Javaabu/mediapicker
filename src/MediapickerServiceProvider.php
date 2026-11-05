@@ -17,12 +17,13 @@ use Javaabu\Mediapicker\Commands\AttachmentsRegenerateCommand;
 use Javaabu\Mediapicker\Events\MediaCropped;
 use Javaabu\Mediapicker\Listeners\RegenerateCroppedConversions;
 use Javaabu\Mediapicker\Models\Attachment;
+use Javaabu\Mediapicker\Models\Media;
 use Javaabu\Mediapicker\Models\Observers\AttachmentObserver;
 use Javaabu\Mediapicker\Models\Observers\MediaObserver;
 use Javaabu\Mediapicker\Policies\MediaPolicy;
 use Javaabu\Mediapicker\Routing\MediapickerRoutes;
 use Javaabu\Permissions\Permissions;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\MediaLibrary\MediaCollections\Models\Media as SpatieMedia;
 
 class MediapickerServiceProvider extends ServiceProvider
 {
@@ -130,7 +131,9 @@ class MediapickerServiceProvider extends ServiceProvider
             'delete_others_media' => 'Delete media uploaded by others',
         ], label: 'Media');
 
-        Permissions::policy(Mediapicker::mediaModel(), config('mediapicker.policy') ?: MediaPolicy::class);
+        // The base class covers its subclasses (the translatable model); resolving the
+        // model here would query the languages table while booting
+        Permissions::policy(config('mediapicker.media_model') ?: Media::class, config('mediapicker.policy') ?: MediaPolicy::class);
     }
 
     protected function registerMigrations(): void
@@ -161,7 +164,7 @@ class MediapickerServiceProvider extends ServiceProvider
 
     protected function getMediaClass(): string
     {
-        return config('media-library.media_model', Media::class);
+        return config('media-library.media_model', SpatieMedia::class);
     }
 
     protected function getAttachmentClass(): string

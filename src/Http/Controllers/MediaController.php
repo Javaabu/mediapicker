@@ -267,8 +267,12 @@ class MediaController extends Controller
         /** @var Media $media */
         $media = $adder->toMediaCollection($user->getMediapickerCollectionName());
 
-        if (Translations::supports($media)) {
-            $media->fill(Arr::except($request->validated(), ['file', 'type', 'crops', 'name', 'description', 'alt', 'caption']));
+        $media_class = Mediapicker::mediaModel();
+
+        if (Translations::supports($media_class)) {
+            // spatie created it as its own media model; translate through ours
+            $media = $media_class::query()->findOrFail($media->getKey());
+            $media->fill(Arr::except($request->validated(), ['file', 'type', 'crops']));
             $media->save();
         }
 

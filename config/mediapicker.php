@@ -4,7 +4,6 @@ use Javaabu\Mediapicker\Conversions\Jobs\PerformAttachmentConversionsJob;
 use Javaabu\Mediapicker\FileRemover\AttachmentFileRemover;
 use Javaabu\Mediapicker\Http\Controllers\MediaController;
 use Javaabu\Mediapicker\Models\Attachment;
-use Javaabu\Mediapicker\Models\Media;
 use Javaabu\Mediapicker\Models\Observers\AttachmentObserver;
 use Javaabu\Mediapicker\Models\Observers\MediaObserver;
 use Javaabu\Mediapicker\Policies\MediaPolicy;
@@ -16,13 +15,15 @@ return [
     | Models
     |--------------------------------------------------------------------------
     |
-    | The media model must extend Javaabu\Mediapicker\Models\Media. Set it as
-    | spatie's media-library.media_model too. The attachment model must
-    | implement Javaabu\Mediapicker\Contracts\Attachment.
+    | The media model must extend Javaabu\Mediapicker\Models\Media; set it as
+    | spatie's media-library.media_model too. Null uses
+    | Models\Translatable\Media when javaabu/translatable is on, else
+    | Models\Media. The attachment model must implement
+    | Javaabu\Mediapicker\Contracts\Attachment.
     |
     */
 
-    'media_model' => Media::class,
+    'media_model' => null,
 
     'attachment_model' => Attachment::class,
 
