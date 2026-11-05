@@ -17,7 +17,7 @@ class MediaTest extends TestCase
     #[Test]
     public function it_can_set_media_description(): void
     {
-        $media = new Media();
+        $media = new Media;
         $media->description = 'test description';
 
         $this->assertEquals('test description', $media->description);
@@ -26,7 +26,7 @@ class MediaTest extends TestCase
     #[Test]
     public function it_can_set_the_image_dimensions(): void
     {
-        $media = new Media();
+        $media = new Media;
         $media->width = 200;
         $media->height = 100;
 
@@ -39,7 +39,7 @@ class MediaTest extends TestCase
     {
         $media_1 = $this->getMedia();
 
-        $media = new Media();
+        $media = new Media;
         $media->forceFill($media_1->attributesToArray());
 
         $this->assertEquals('image', $media->file_type);
@@ -50,10 +50,10 @@ class MediaTest extends TestCase
     {
         $media_1 = $this->getMedia();
 
-        $media = new Media();
+        $media = new Media;
         $media->forceFill($media_1->attributesToArray());
 
-        $this->assertEquals('fa-regular fa-file-image', $media->getIcon());
+        $this->assertEquals('image', $media->getIcon());
     }
 
     #[Test]
@@ -62,7 +62,7 @@ class MediaTest extends TestCase
         $media_1 = $this->getMedia($this->getTestJpg());
         $media_2 = $this->getMedia($this->getTestPdf());
 
-        $media = Media::hasFileType('pdf')->get();
+        $media = Media::hasFileType('document')->get();
 
         $this->assertCount(1, $media);
         $this->assertEquals($media_2->id, $media->first()->id);

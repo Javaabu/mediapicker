@@ -2,32 +2,28 @@
 
 namespace Javaabu\Mediapicker\Http\Controllers;
 
+use Exception;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
-use Javaabu\Helpers\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Javaabu\Helpers\Media\AllowedMimeTypes;
-use Javaabu\Helpers\Traits\HasOrderbys;
 use Javaabu\Mediapicker\Contracts\MediaOwner;
 use Javaabu\Mediapicker\Http\Requests\MediaRequest;
 use Javaabu\Mediapicker\Mediapicker;
 use Javaabu\Mediapicker\Models\Media;
+use Javaabu\Mediapicker\Support\FileTypes;
 use Spatie\Image\Image;
 
 class MediaController extends Controller
 {
-    use HasOrderbys;
+    use AuthorizesRequests;
+    use ValidatesRequests;
 
-    /**
-     * Initialize orderbys
-     */
-    protected static function initOrderbys()
+    protected function flashSuccessMessage(): void
     {
-        static::$orderbys = [
-            'name'       => __('Name'),
-            'created_at' => __('Created At'),
-            'id'         => __('ID'),
-        ];
+        session()->flash('success', __('Saved.'));
     }
 
     /**
@@ -50,16 +46,16 @@ class MediaController extends Controller
         $this->authorize('viewAny', Mediapicker::mediaModel());
 
         $title = __('All Media');
-        $orderby = $this->getOrderBy($request, 'created_at');
-        $order = $this->getOrder($request, 'created_at', $orderby);
-        $per_page = $this->getPerPage($request, 24);
+        $orderby = in_array($request->input('orderby'), ['name', 'created_at', 'id']) ? $request->input('orderby') : 'created_at';
+        $order = $request->input('order') === 'asc' ? 'asc' : 'desc';
+        $per_page = min(max($request->integer('per_page', 24), 1), 100);
 
         $view = $request->input('view', 'grid');
 
         $media_class = Mediapicker::mediaModel();
 
         $media_items = $media_class::userVisible()
-                            ->orderBy($orderby, $order);
+            ->orderBy($orderby, $order);
 
         $mode = $request->input('mode', 'index');
         $single = $request->input('single') == true;
@@ -76,13 +72,17 @@ class MediaController extends Controller
             $media_items->hasFileType($type);
         }
 
-        if ($date_field = $request->input('date_field')) {
-            $media_items->dateBetween($date_field, $request->input('date_from'), $request->input('date_to'));
+        if ($date_from = $request->date('date_from')) {
+            $media_items->where('created_at', '>=', $date_from->startOfDay());
+        }
+
+        if ($date_to = $request->date('date_to')) {
+            $media_items->where('created_at', '<=', $date_to->endOfDay());
         }
 
         $media_items = $media_items->with('model')
-                                   ->paginate($per_page)
-                                   ->appends($request->except('page'));
+            ->paginate($per_page)
+            ->appends($request->except('page'));
 
         $selected = $request->input('selected', []);
         $selected = Arr::wrap($selected);
@@ -134,9 +134,9 @@ class MediaController extends Controller
         try {
             $image = Image::load($file);
 
-            $custom_properties['width'] =  $image->getWidth();
-            $custom_properties['height'] =  $image->getHeight();
-        } catch (\Exception $e) {
+            $custom_properties['width'] = $image->getWidth();
+            $custom_properties['height'] = $image->getHeight();
+        } catch (Exception $e) {
             Log::error('MediapickerError: Could not load image dimensions. Error: ' . $e->getMessage());
         }
 
@@ -150,17 +150,17 @@ class MediaController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'success'   => true,
-                'id'        => $media->id,
-                'uuid'      => $media->uuid,
-                'thumb'     => $media->getUrl('mediapicker-thumb'),
-                'large'     => $media->getUrl('mediapicker-large'),
-                'file_type' => AllowedMimeTypes::getType($media->mime_type),
-                'icon'      => AllowedMimeTypes::getIcon($media->mime_type, Mediapicker::getIconPack()),
-                'name'      => $media->name,
+                'success' => true,
+                'id' => $media->id,
+                'uuid' => $media->uuid,
+                'thumb' => $media->getUrl('mediapicker-thumb'),
+                'large' => $media->getUrl('mediapicker-large'),
+                'file_type' => FileTypes::typeOf($media->mime_type),
+                'icon' => FileTypes::icon($media->mime_type),
+                'name' => $media->name,
                 'file_name' => $media->file_name,
-                'url'       => $media->getUrl(),
-                'edit_url'  => $edit_url,
+                'url' => $media->getUrl(),
+                'edit_url' => $edit_url,
             ]);
         }
 
@@ -178,8 +178,6 @@ class MediaController extends Controller
 
         return view(Mediapicker::getViewName('media.create'));
     }
-
-
 
     /**
      * Display the specified resource.
@@ -255,9 +253,9 @@ class MediaController extends Controller
         $user = $request->user();
 
         $rules = [
-            'action'  => 'required|in:delete',
-            'media'   => 'required|array',
-            'media.*' => 'exists:media,id,collection_name,'.$user->getMediapickerCollectionName().',model_type,' . $user->getMorphClass(),
+            'action' => 'required|in:delete',
+            'media' => 'required|array',
+            'media.*' => 'exists:media,id,collection_name,' . $user->getMediapickerCollectionName() . ',model_type,' . $user->getMorphClass(),
         ];
 
         if (! $user->canDeleteOthersMedia()) {
@@ -275,21 +273,21 @@ class MediaController extends Controller
                 $media_model = Mediapicker::mediaModel();
 
                 $media = $media_model::whereIn('id', $ids)
-                            ->where('collection_name', $user->getMediapickerCollectionName())
-                            ->whereModelType($user->getMorphClass());
+                    ->where('collection_name', $user->getMediapickerCollectionName())
+                    ->whereModelType($user->getMorphClass());
 
                 $media->get()
-                      ->each(function ($media) {
-                          $this->authorize('delete', $media);
-                          $media->delete();
-                      });
+                    ->each(function ($media) {
+                        $this->authorize('delete', $media);
+                        $media->delete();
+                    });
                 break;
         }
 
         $this->flashSuccessMessage();
 
-        $redirect = add_query_arg('view', $view, Mediapicker::newMediaInstance()->url('index'));
+        $redirect = Mediapicker::newMediaInstance()->url('index') . ($view ? '?' . http_build_query(['view' => $view]) : '');
 
-        return $this->redirect($request, $redirect);
+        return redirect()->to($redirect);
     }
 }

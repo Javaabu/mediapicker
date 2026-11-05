@@ -37,13 +37,13 @@ class InteractsWithAttachmentsTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('posts', [
-            'id' => $post->id
+            'id' => $post->id,
         ]);
 
         $post->delete();
 
         $this->assertDatabaseMissing('posts', [
-            'id' => $post->id
+            'id' => $post->id,
         ]);
 
         $this->assertDatabaseMissing('attachments', [
@@ -55,7 +55,7 @@ class InteractsWithAttachmentsTest extends TestCase
     #[Test]
     public function it_can_get_the_attachment_model(): void
     {
-        $post = new Post();
+        $post = new Post;
 
         $this->assertEquals(Attachment::class, $post->getAttachmentModel());
     }
@@ -97,7 +97,6 @@ class InteractsWithAttachmentsTest extends TestCase
         $model = $this->getModel();
         $media = $this->getMedia();
 
-
         Route::post('/add-attachment', function () {
             /** @var Post $model */
             $model = Post::first();
@@ -119,7 +118,7 @@ class InteractsWithAttachmentsTest extends TestCase
             'model_id' => $model->getKey(),
             'model_type' => 'post',
             'order_column' => 1,
-            'collection_name' => 'default'
+            'collection_name' => 'default',
         ]);
     }
 
@@ -131,7 +130,6 @@ class InteractsWithAttachmentsTest extends TestCase
         $model = $this->getModel();
         $media_1 = $this->getMedia();
         $media_2 = $this->getMedia();
-
 
         Route::post('/add-attachments', function () {
             /** @var Post $model */
@@ -149,7 +147,7 @@ class InteractsWithAttachmentsTest extends TestCase
 
         $this->post('/add-attachments', [
             'media_1' => $media_1->getKey(),
-            'media_2' => $media_2->getKey()
+            'media_2' => $media_2->getKey(),
         ])->assertSuccessful();
 
         $this->assertDatabaseHas('attachments', [
@@ -157,7 +155,7 @@ class InteractsWithAttachmentsTest extends TestCase
             'model_id' => $model->getKey(),
             'model_type' => 'post',
             'order_column' => 1,
-            'collection_name' => 'default'
+            'collection_name' => 'default',
         ]);
 
         $this->assertDatabaseHas('attachments', [
@@ -165,7 +163,7 @@ class InteractsWithAttachmentsTest extends TestCase
             'model_id' => $model->getKey(),
             'model_type' => 'post',
             'order_column' => 2,
-            'collection_name' => 'default'
+            'collection_name' => 'default',
         ]);
     }
 
@@ -534,7 +532,7 @@ class InteractsWithAttachmentsTest extends TestCase
 
         // Create a request with media_id
         $request = new Request([
-            'avatar' => $media->id
+            'avatar' => $media->id,
         ]);
 
         // Update the attachment
@@ -547,7 +545,7 @@ class InteractsWithAttachmentsTest extends TestCase
         // Test clearing the attachment
         $clearRequest = new Request([
             'avatar' => null,
-            'clear_file' => true
+            'clear_file' => true,
         ]);
 
         $clearResult = $post->updateSingleAttachment('avatar', $clearRequest);
@@ -639,7 +637,7 @@ class InteractsWithAttachmentsTest extends TestCase
         $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path_2);
         $this->assertFileExists($path_2);
 
-        $file_hash_2 =  hash_file('sha256', $path_2);
+        $file_hash_2 = hash_file('sha256', $path_2);
         $this->assertEquals($file_hash, $file_hash_2);
     }
 }

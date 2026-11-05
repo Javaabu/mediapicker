@@ -4,11 +4,12 @@ namespace Javaabu\Mediapicker\Tests;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Javaabu\Forms\FormsServiceProvider;
-use Javaabu\Helpers\HelpersServiceProvider;
+use Javaabu\Mediapicker\MediapickerServiceProvider;
 use Javaabu\Mediapicker\Models\Attachment;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithConversions;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithMultipleConversions;
@@ -18,18 +19,14 @@ use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithUnacceptedFile;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithUnacceptedMimeType;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\Post;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\User;
-use Javaabu\Settings\SettingsServiceProvider;
-use Orchestra\Testbench\TestCase as BaseTestCase;
-use Javaabu\Mediapicker\MediapickerServiceProvider;
 use Javaabu\Mediapicker\Tests\TestSupport\Providers\TestServiceProvider;
-use Javaabu\Activitylog\ActivitylogServiceProvider;
+use Orchestra\Testbench\TestCase as BaseTestCase;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\MediaLibrary\MediaLibraryServiceProvider;
 
 abstract class TestCase extends BaseTestCase
 {
-
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -60,15 +57,12 @@ abstract class TestCase extends BaseTestCase
             MediapickerServiceProvider::class,
             MediaLibraryServiceProvider::class,
             TestServiceProvider::class,
-            HelpersServiceProvider::class,
-            SettingsServiceProvider::class,
             FormsServiceProvider::class,
-            ActivitylogServiceProvider::class,
         ];
     }
 
     /**
-     * @param  \Illuminate\Foundation\Application  $app
+     * @param  Application  $app
      */
     public function getEnvironmentSetUp($app)
     {
@@ -93,7 +87,7 @@ abstract class TestCase extends BaseTestCase
 
     protected function getImageDimensions(string $path): array
     {
-        list($width, $height, $type, $attr) = getimagesize($path);
+        [$width, $height, $type, $attr] = getimagesize($path);
 
         return compact('width', 'height');
     }
@@ -172,7 +166,7 @@ abstract class TestCase extends BaseTestCase
             $model = $this->getModel();
         }
 
-        $attachment = new Attachment();
+        $attachment = new Attachment;
         $attachment->collection_name = $collection_name;
         $attachment->media()->associate($media);
         $attachment->model()->associate($model);
@@ -184,7 +178,7 @@ abstract class TestCase extends BaseTestCase
     protected function setUpTempTestFiles()
     {
         $this->initializeDirectory($this->getTestFilesDirectory());
-        File::copyDirectory(__DIR__.'/TestSupport/testfiles', $this->getTestFilesDirectory());
+        File::copyDirectory(__DIR__ . '/TestSupport/testfiles', $this->getTestFilesDirectory());
     }
 
     protected function initializeDirectory($directory)
@@ -202,22 +196,22 @@ abstract class TestCase extends BaseTestCase
             $suffix = "/{$suffix}";
         }
 
-        return __DIR__.$suffix;
+        return __DIR__ . $suffix;
     }
 
     public function getTempDirectory(string $suffix = ''): string
     {
-        return __DIR__.'/TestSupport/temp'.($suffix == '' ? '' : '/'.$suffix);
+        return __DIR__ . '/TestSupport/temp' . ($suffix == '' ? '' : '/' . $suffix);
     }
 
     public function getMediaDirectory(string $suffix = ''): string
     {
-        return $this->getTempDirectory().'/media'.($suffix == '' ? '' : DIRECTORY_SEPARATOR .$suffix);
+        return $this->getTempDirectory() . '/media' . ($suffix == '' ? '' : DIRECTORY_SEPARATOR . $suffix);
     }
 
     public function getTestFilesDirectory(string $suffix = ''): string
     {
-        return $this->getTempDirectory().'/testfiles'.($suffix == '' ? '' : '/'.$suffix);
+        return $this->getTempDirectory() . '/testfiles' . ($suffix == '' ? '' : '/' . $suffix);
     }
 
     public function getTestJpg(): string

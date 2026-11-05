@@ -1,6 +1,7 @@
 <?php
 
 namespace Javaabu\Mediapicker\Tests\TestSupport\Models;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Javaabu\Mediapicker\Concerns\OwnsMedia;
@@ -17,14 +18,16 @@ class User extends Authenticatable implements MediaOwner
 
     protected static function newFactory()
     {
-        return new UserFactory();
+        return new UserFactory;
     }
 
-    public function registerMediaConversions(?Media $media = null): void {
+    public function registerMediaConversions(?Media $media = null): void
+    {
         $this->registerMediapickerConversions($media);
     }
 
-    public function registerMediaCollections(): void {
+    public function registerMediaCollections(): void
+    {
         $this->registerMediapickerCollections();
     }
 }

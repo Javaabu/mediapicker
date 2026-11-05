@@ -3,14 +3,11 @@
 namespace Javaabu\Mediapicker\Tests\Unit\AttachmentCollections;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Route;
 use Javaabu\Mediapicker\AttachmentCollections\Exceptions\MediaIsTooBig;
 use Javaabu\Mediapicker\AttachmentCollections\Exceptions\MediaUnacceptableForCollection;
 use Javaabu\Mediapicker\AttachmentCollections\Exceptions\UnknownType;
 use Javaabu\Mediapicker\AttachmentCollections\MediaAdder;
-use Javaabu\Mediapicker\AttachmentCollections\MediaAdderFactory;
 use Javaabu\Mediapicker\Tests\TestCase;
-use Javaabu\Mediapicker\Tests\TestSupport\Models\Post;
 use PHPUnit\Framework\Attributes\Test;
 
 class MediaAdderTest extends TestCase
@@ -22,7 +19,7 @@ class MediaAdderTest extends TestCase
     {
         $model = $this->getModel();
 
-        $media_adder = new MediaAdder();
+        $media_adder = new MediaAdder;
         $media_adder = $media_adder->setSubject($model);
 
         $this->assertInstanceOf(MediaAdder::class, $media_adder);
@@ -33,7 +30,7 @@ class MediaAdderTest extends TestCase
     {
         $media = $this->getMedia();
 
-        $media_adder = new MediaAdder();
+        $media_adder = new MediaAdder;
 
         $media_adder = $media_adder->setMedia($media->getKey());
 
@@ -45,7 +42,7 @@ class MediaAdderTest extends TestCase
     {
         $media = $this->getMedia();
 
-        $media_adder = new MediaAdder();
+        $media_adder = new MediaAdder;
 
         $media_adder = $media_adder->setMedia($media);
 
@@ -55,7 +52,7 @@ class MediaAdderTest extends TestCase
     #[Test]
     public function it_throws_an_error_when_setting_media_to_a_missing_media(): void
     {
-        $media_adder = new MediaAdder();
+        $media_adder = new MediaAdder;
 
         $this->expectException(UnknownType::class);
 
@@ -68,9 +65,9 @@ class MediaAdderTest extends TestCase
         $model = $this->getModel();
         $media = $this->getMedia();
 
-        $media_adder = new MediaAdder();
+        $media_adder = new MediaAdder;
         $media_adder->setSubject($model)
-                    ->setMedia($media);
+            ->setMedia($media);
 
         config()->set('media-library.max_file_size', 1);
 
@@ -87,7 +84,7 @@ class MediaAdderTest extends TestCase
         $model = $this->getModelWithUnacceptedFile();
         $media = $this->getMedia();
 
-        $media_adder = new MediaAdder();
+        $media_adder = new MediaAdder;
         $media_adder->setSubject($model)
             ->setMedia($media);
 
@@ -104,7 +101,7 @@ class MediaAdderTest extends TestCase
         $model = $this->getModelWithUnacceptedMimeType();
         $media = $this->getMedia();
 
-        $media_adder = new MediaAdder();
+        $media_adder = new MediaAdder;
         $media_adder->setSubject($model)
             ->setMedia($media);
 
@@ -121,7 +118,7 @@ class MediaAdderTest extends TestCase
         $model = $this->getModel();
         $media = $this->getMedia();
 
-        $media_adder = new MediaAdder();
+        $media_adder = new MediaAdder;
         $media_adder->setSubject($model)
             ->setMedia($media);
 
@@ -133,7 +130,7 @@ class MediaAdderTest extends TestCase
             'model_id' => $model->getKey(),
             'model_type' => 'post',
             'order_column' => 1,
-            'collection_name' => 'default'
+            'collection_name' => 'default',
         ]);
     }
 
@@ -143,7 +140,7 @@ class MediaAdderTest extends TestCase
         $model = $this->getModel();
         $media = $this->getMedia();
 
-        $media_adder = new MediaAdder();
+        $media_adder = new MediaAdder;
         $media_adder->setSubject($model)
             ->setMedia($media);
 
@@ -155,7 +152,7 @@ class MediaAdderTest extends TestCase
             'model_id' => $model->getKey(),
             'model_type' => 'post',
             'order_column' => 1,
-            'collection_name' => 'test'
+            'collection_name' => 'test',
         ]);
     }
 
@@ -165,7 +162,7 @@ class MediaAdderTest extends TestCase
         $model = $this->getModel();
         $media = $this->getMedia();
 
-        $media_adder = new MediaAdder();
+        $media_adder = new MediaAdder;
         $media_adder->setSubject($model)
             ->setMedia($media);
 
@@ -177,12 +174,12 @@ class MediaAdderTest extends TestCase
             'model_id' => $model->getKey(),
             'model_type' => 'post',
             'order_column' => 1,
-            'collection_name' => 'default'
+            'collection_name' => 'default',
         ]);
 
         $media = $this->getMedia();
 
-        $media_adder = new MediaAdder();
+        $media_adder = new MediaAdder;
         $media_adder->setSubject($model)
             ->setMedia($media);
 
@@ -194,7 +191,7 @@ class MediaAdderTest extends TestCase
             'model_id' => $model->getKey(),
             'model_type' => 'post',
             'order_column' => 2,
-            'collection_name' => 'default'
+            'collection_name' => 'default',
         ]);
     }
 
@@ -204,7 +201,7 @@ class MediaAdderTest extends TestCase
         $model = $this->getModel();
         $media = $this->getMedia();
 
-        $media_adder = new MediaAdder();
+        $media_adder = new MediaAdder;
         $media_adder->setSubject($model)
             ->setMedia($media)
             ->setOrder(3);
@@ -217,7 +214,7 @@ class MediaAdderTest extends TestCase
             'model_id' => $model->getKey(),
             'model_type' => 'post',
             'order_column' => 3,
-            'collection_name' => 'default'
+            'collection_name' => 'default',
         ]);
     }
 
@@ -227,7 +224,7 @@ class MediaAdderTest extends TestCase
         $model = $this->getModelWithSingleFile();
         $media = $this->getMedia();
 
-        $media_adder = new MediaAdder();
+        $media_adder = new MediaAdder;
         $media_adder->setSubject($model)
             ->setMedia($media);
 
@@ -239,12 +236,12 @@ class MediaAdderTest extends TestCase
             'model_id' => $model->getKey(),
             'model_type' => $model->getMorphClass(),
             'order_column' => 1,
-            'collection_name' => 'test'
+            'collection_name' => 'test',
         ]);
 
         $media_2 = $this->getMedia();
 
-        $media_adder = new MediaAdder();
+        $media_adder = new MediaAdder;
         $media_adder->setSubject($model)
             ->setMedia($media_2);
 
@@ -260,8 +257,7 @@ class MediaAdderTest extends TestCase
             'model_id' => $model->getKey(),
             'model_type' => $model->getMorphClass(),
             'order_column' => 2,
-            'collection_name' => 'test'
+            'collection_name' => 'test',
         ]);
     }
-
 }

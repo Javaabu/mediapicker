@@ -3,7 +3,6 @@
 namespace Javaabu\Mediapicker\Tests\Feature\Commands;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Javaabu\Mediapicker\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -19,7 +18,7 @@ class AttachmentsRegenerateCommandTest extends TestCase
         $media = $this->getMedia();
 
         $attachment = $model->addAttachment($media)
-                            ->toAttachmentCollection();
+            ->toAttachmentCollection();
 
         $path = $model->getFirstAttachmentPath(conversionName: 'test');
 
@@ -131,7 +130,7 @@ class AttachmentsRegenerateCommandTest extends TestCase
 
         // Only regenerate first attachment
         $this->artisan('mediapicker:regenerate', [
-            '--ids' => [$attachment1->id]
+            '--ids' => [$attachment1->id],
         ])->assertSuccessful();
 
         $this->assertFileExists($path1);
@@ -165,7 +164,7 @@ class AttachmentsRegenerateCommandTest extends TestCase
 
         // Regenerate from attachment2 onwards
         $this->artisan('mediapicker:regenerate', [
-            '--starting-from-id' => $attachment2->id
+            '--starting-from-id' => $attachment2->id,
         ])->assertSuccessful();
 
         $this->assertFileDoesNotExist($path1);
@@ -201,7 +200,7 @@ class AttachmentsRegenerateCommandTest extends TestCase
         // Regenerate from attachment2 onwards but exclude attachment2
         $this->artisan('mediapicker:regenerate', [
             '--starting-from-id' => $attachment2->id,
-            '--exclude-starting-id' => true
+            '--exclude-starting-id' => true,
         ])->assertSuccessful();
 
         $this->assertFileDoesNotExist($path1);
@@ -232,7 +231,7 @@ class AttachmentsRegenerateCommandTest extends TestCase
         sleep(1);
 
         $this->artisan('mediapicker:regenerate', [
-            '--only-missing' => true
+            '--only-missing' => true,
         ])->assertSuccessful();
 
         $this->assertFileExists($path1);
@@ -273,12 +272,11 @@ class AttachmentsRegenerateCommandTest extends TestCase
         // Regenerate only model1 attachments with id >= attachment2
         $this->artisan('mediapicker:regenerate', [
             'modelType' => $model1->getMorphClass(),
-            '--starting-from-id' => $attachment2->id
+            '--starting-from-id' => $attachment2->id,
         ])->assertSuccessful();
 
         $this->assertFileDoesNotExist($path1);
         $this->assertFileExists($path2);
         $this->assertFileDoesNotExist($path3);
     }
-
 }

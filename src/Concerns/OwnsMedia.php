@@ -2,8 +2,8 @@
 
 namespace Javaabu\Mediapicker\Concerns;
 
-use Javaabu\Helpers\Media\AllowedMimeTypes;
 use Javaabu\Mediapicker\Mediapicker;
+use Javaabu\Mediapicker\Support\FileTypes;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\MediaCollections\File;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -22,7 +22,7 @@ trait OwnsMedia
     {
         $this->addMediaCollection($this->getMediapickerCollectionName())
             ->acceptsFile(function (File $file) {
-                return AllowedMimeTypes::isAllowedMimeType($file->mimeType);
+                return FileTypes::isAllowed($file->mimeType);
             });
     }
 

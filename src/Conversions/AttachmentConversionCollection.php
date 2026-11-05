@@ -5,6 +5,7 @@ namespace Javaabu\Mediapicker\Conversions;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Arr;
 use Javaabu\Mediapicker\Contracts\Attachment;
+use Javaabu\Mediapicker\Contracts\HasAttachments;
 use Spatie\MediaLibrary\Conversions\Conversion;
 use Spatie\MediaLibrary\Conversions\ConversionCollection;
 
@@ -48,7 +49,7 @@ class AttachmentConversionCollection extends ConversionCollection
             return;
         }
 
-        /** @var \Javaabu\Mediapicker\Contracts\HasAttachments $model */
+        /** @var HasAttachments $model */
         $model = new $modelName;
 
         /*

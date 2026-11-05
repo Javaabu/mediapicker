@@ -148,7 +148,7 @@ class AttachmentsCleanCommand extends Command
                     $this->markConversionAsRemoved($media, $currentFilePath);
                 }
 
-                $this->info("Deprecated conversion file `{$currentFilePath}` ".($this->isDryRun ? 'found' : 'has been removed'));
+                $this->info("Deprecated conversion file `{$currentFilePath}` " . ($this->isDryRun ? 'found' : 'has been removed'));
             });
     }
 

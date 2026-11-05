@@ -9,7 +9,6 @@ use Javaabu\Mediapicker\Models\Media;
 
 class Mediapicker
 {
-
     public static function collectionName(): string
     {
         return config('mediapicker.collection_name');
@@ -69,10 +68,10 @@ class Mediapicker
      */
     public static function registerRoutes(
         string $url = 'media',
-        array|string  $middleware = [],
+        array|string $middleware = [],
         array $resource_options = [],
         array $resource_names = [
-            'index' =>	'media.index',
+            'index' => 'media.index',
             'create' => 'media.create',
             'store' => 'media.store',
             'show' => 'media.show',
@@ -82,8 +81,7 @@ class Mediapicker
         ],
         string $bulk_name = 'media.bulk',
         string $picker_name = 'media.picker',
-    )
-    {
+    ) {
         $controller = static::mediaController();
 
         Route::match(['PUT', 'PATCH'], $url, [$controller, 'bulk'])
@@ -97,7 +95,7 @@ class Mediapicker
         $resource_options = array_merge([
             'parameters' => [
                 $url => 'media',
-            ]
+            ],
         ], $resource_options);
 
         Route::resource('media', $controller, $resource_options)

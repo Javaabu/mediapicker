@@ -1,11 +1,9 @@
 # Mediapicker
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/javaabu/mediapicker.svg?style=flat-square)](https://packagist.org/packages/javaabu/mediapicker)
-[![Test Status](../../actions/workflows/run-tests.yml/badge.svg)](../../actions/workflows/run-tests.yml)
-![Code Coverage Badge](./.github/coverage.svg)
-[![Total Downloads](https://img.shields.io/packagist/dt/javaabu/mediapicker.svg?style=flat-square)](https://packagist.org/packages/javaabu/mediapicker)
-
-
+[![Tests](https://github.com/n4ff4h/mediapicker/actions/workflows/tests.yml/badge.svg?branch=next-gen)](https://github.com/n4ff4h/mediapicker/actions/workflows/tests.yml?query=branch%3Anext-gen)
+[![codecov](https://codecov.io/gh/n4ff4h/mediapicker/branch/next-gen/graph/badge.svg)](https://codecov.io/gh/n4ff4h/mediapicker/tree/next-gen)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/javaabu/mediapicker.svg)](https://packagist.org/packages/javaabu/mediapicker)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.md)
 
 ## Introduction
 Allow for file uploads from a persistent storage

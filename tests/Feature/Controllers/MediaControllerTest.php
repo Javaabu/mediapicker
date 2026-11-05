@@ -14,7 +14,7 @@ class MediaControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -47,7 +47,6 @@ class MediaControllerTest extends TestCase
             ->assertRedirect()
             ->assertSessionMissing('errors');
 
-
         $this->assertDatabaseHas('media', [
             'model_id' => $user->id,
             'model_type' => $user->getMorphClass(),
@@ -56,7 +55,7 @@ class MediaControllerTest extends TestCase
             'custom_properties' => json_encode([
                 'width' => 340,
                 'height' => 280,
-            ])
+            ]),
         ]);
     }
 
@@ -95,7 +94,7 @@ class MediaControllerTest extends TestCase
                 'name',
                 'file_name',
                 'url',
-                'edit_url'
+                'edit_url',
             ])
             ->assertJson([
                 'success' => true,
@@ -111,7 +110,7 @@ class MediaControllerTest extends TestCase
             'custom_properties' => json_encode([
                 'width' => 340,
                 'height' => 280,
-            ])
+            ]),
         ]);
     }
 
@@ -136,6 +135,8 @@ class MediaControllerTest extends TestCase
     #[Test]
     public function it_does_not_show_other_users_media_to_unauthorized_users_on_the_index_page(): void
     {
+        $this->markTestIncomplete('The material-admin views are replaced by the forms v2 and Inertia pages (#9)');
+
         $this->withoutExceptionHandling();
 
         Gate::define('view_media', function (User $user) {
@@ -154,7 +155,6 @@ class MediaControllerTest extends TestCase
 
         $other_user = User::factory()->create();
 
-
         $other_file = $this->getTestImageEndingWithUnderscore();
         $other_media = $this->getMedia($other_file, user: $other_user);
 
@@ -167,6 +167,8 @@ class MediaControllerTest extends TestCase
     #[Test]
     public function it_can_show_others_media_to_authorized_users_on_the_index_page(): void
     {
+        $this->markTestIncomplete('The material-admin views are replaced by the forms v2 and Inertia pages (#9)');
+
         $this->withoutExceptionHandling();
 
         Gate::define('view_media', function (User $user) {
@@ -184,7 +186,6 @@ class MediaControllerTest extends TestCase
         $media = $this->getMedia(user: $user);
 
         $other_user = User::factory()->create();
-
 
         $other_file = $this->getTestImageEndingWithUnderscore();
         $other_media = $this->getMedia($other_file, user: $other_user);
@@ -198,6 +199,8 @@ class MediaControllerTest extends TestCase
     #[Test]
     public function it_can_show_the_media_picker_page(): void
     {
+        $this->markTestIncomplete('The material-admin views are replaced by the forms v2 and Inertia pages (#9)');
+
         $this->withoutExceptionHandling();
 
         Gate::define('view_media', function (User $user) {
@@ -216,7 +219,6 @@ class MediaControllerTest extends TestCase
 
         $other_user = User::factory()->create();
 
-
         $other_file = $this->getTestImageEndingWithUnderscore();
         $other_media = $this->getMedia($other_file, user: $other_user);
 
@@ -229,6 +231,8 @@ class MediaControllerTest extends TestCase
     #[Test]
     public function it_can_show_the_create_media_page_for_authorized_users(): void
     {
+        $this->markTestIncomplete('The material-admin views are replaced by the forms v2 and Inertia pages (#9)');
+
         $this->withoutExceptionHandling();
 
         Gate::define('edit_media', function (User $user) {
@@ -262,6 +266,8 @@ class MediaControllerTest extends TestCase
     #[Test]
     public function it_can_show_media_details_for_authorized_users(): void
     {
+        $this->markTestIncomplete('The material-admin views are replaced by the forms v2 and Inertia pages (#9)');
+
         $this->withoutExceptionHandling();
 
         Gate::define('view_media', function (User $user) {
@@ -335,7 +341,7 @@ class MediaControllerTest extends TestCase
 
         $this->assertDatabaseHas('media', [
             'id' => $media->id,
-            'name' => 'test'
+            'name' => 'test',
         ]);
     }
 
@@ -363,7 +369,7 @@ class MediaControllerTest extends TestCase
         $this->assertDatabaseHas('media', [
             'id' => $media->id,
             'name' => 'Updated Name',
-            'custom_properties' => json_encode(['description' => 'Updated Description'])
+            'custom_properties' => json_encode(['description' => 'Updated Description']),
         ]);
     }
 
@@ -409,7 +415,7 @@ class MediaControllerTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseMissing('media', [
-            'id' => $media->id
+            'id' => $media->id,
         ]);
     }
 
@@ -431,7 +437,7 @@ class MediaControllerTest extends TestCase
             ->assertSuccessful();
 
         $this->assertDatabaseMissing('media', [
-            'id' => $media->id
+            'id' => $media->id,
         ]);
     }
 

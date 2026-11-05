@@ -58,5 +58,4 @@ interface Attachment
     public static function setNewOrder(array $ids, int $startOrder = 1): void;
 
     public function shouldSortWhenCreating(): bool;
-
 }

@@ -4,7 +4,7 @@ namespace Javaabu\Mediapicker\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Javaabu\Helpers\Media\AllowedMimeTypes;
+use Javaabu\Mediapicker\Support\FileTypes;
 
 class MediaRequest extends FormRequest
 {
@@ -29,11 +29,11 @@ class MediaRequest extends FormRequest
         $media = $this->route('media');
 
         $rules = [
-            'file' => AllowedMimeTypes::getValidationRule($type ?? '', true),
+            'file' => FileTypes::rules($type ?: null),
             'type' => [
                 'nullable',
                 'string',
-                Rule::in(AllowedMimeTypes::getAllowedTypes()),
+                Rule::in(FileTypes::types()),
             ],
             'name' => [
                 'string',

@@ -55,7 +55,7 @@ class AttachmentsCleanCommandTest extends TestCase
         $media = $this->getMedia();
 
         $attachment = $model->addAttachment($media)
-                            ->toAttachmentCollection();
+            ->toAttachmentCollection();
 
         $path = $model->getFirstAttachmentPath(conversionName: 'test');
 

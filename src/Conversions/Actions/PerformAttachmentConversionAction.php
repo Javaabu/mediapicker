@@ -57,7 +57,7 @@ class PerformAttachmentConversionAction
         string $fileNameWithDirectory,
         string $newFileNameWithoutDirectory
     ): string {
-        $targetFile = pathinfo($fileNameWithDirectory, PATHINFO_DIRNAME).'/'.$newFileNameWithoutDirectory;
+        $targetFile = pathinfo($fileNameWithDirectory, PATHINFO_DIRNAME) . '/' . $newFileNameWithoutDirectory;
 
         rename($fileNameWithDirectory, $targetFile);
 

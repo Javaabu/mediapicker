@@ -3,8 +3,8 @@
 namespace Javaabu\Mediapicker\FileRemover;
 
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Spatie\MediaLibrary\Support\FileRemover\FileRemoverFactory;
 use Spatie\MediaLibrary\Support\FileRemover\FileRemover;
+use Spatie\MediaLibrary\Support\FileRemover\FileRemoverFactory;
 
 class AttachmentFileRemoverFactory extends FileRemoverFactory
 {

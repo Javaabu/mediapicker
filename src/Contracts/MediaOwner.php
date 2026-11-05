@@ -6,7 +6,7 @@ use Illuminate\Contracts\Auth\Access\Authorizable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-interface MediaOwner extends HasMedia, Authorizable
+interface MediaOwner extends Authorizable, HasMedia
 {
     /*
      * Register the media picker collections.

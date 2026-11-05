@@ -2,7 +2,6 @@
 
 namespace Javaabu\Mediapicker\Policies;
 
-use Javaabu\Activitylog\Models\Activity;
 use Javaabu\Mediapicker\Contracts\MediaOwner;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
@@ -46,13 +45,5 @@ class MediaPolicy
     public function delete(MediaOwner $user, Media $media): bool
     {
         return $user->canDeleteMedia($media);
-    }
-
-    /**
-     * Determine whether the user can view the model logs.
-     */
-    public function viewLogs(MediaOwner $user, Media $media): bool
-    {
-        return $user->can('viewAny', Activity::class) && $this->update($user, $media);
     }
 }

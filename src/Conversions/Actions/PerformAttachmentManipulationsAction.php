@@ -60,7 +60,7 @@ class PerformAttachmentManipulationsAction
             $extension = 'jpg';
         }
 
-        $fileName = Str::random(32)."{$conversion->getName()}.{$extension}";
+        $fileName = Str::random(32) . "{$conversion->getName()}.{$extension}";
 
         return "{$directory}/{$fileName}";
     }

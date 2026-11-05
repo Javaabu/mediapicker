@@ -26,7 +26,7 @@ class MediapickerServiceProvider extends ServiceProvider
             ], 'mediapicker-config');
 
             $this->publishes([
-                __DIR__.'/../database/migrations' => database_path('migrations'),
+                __DIR__ . '/../database/migrations' => database_path('migrations'),
             ], 'mediapicker-migrations');
 
             $this->publishes([
@@ -67,6 +67,7 @@ class MediapickerServiceProvider extends ServiceProvider
 
         $this->app->singleton(AttachmentRepository::class, function () {
             $attachmentClass = $this->getAttachmentClass();
+
             return new AttachmentRepository(new $attachmentClass);
         });
 
