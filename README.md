@@ -1,7 +1,7 @@
 # Mediapicker
 
-[![Tests](https://github.com/n4ff4h/mediapicker/actions/workflows/tests.yml/badge.svg?branch=next-gen)](https://github.com/n4ff4h/mediapicker/actions/workflows/tests.yml?query=branch%3Anext-gen)
-[![codecov](https://codecov.io/gh/n4ff4h/mediapicker/branch/next-gen/graph/badge.svg)](https://codecov.io/gh/n4ff4h/mediapicker/tree/next-gen)
+[![Tests](https://github.com/Javaabu/mediapicker/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/Javaabu/mediapicker/actions/workflows/tests.yml?query=branch%3Amain)
+[![codecov](https://codecov.io/gh/Javaabu/mediapicker/branch/main/graph/badge.svg)](https://codecov.io/gh/Javaabu/mediapicker/tree/main)
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/javaabu/mediapicker.svg)](https://packagist.org/packages/javaabu/mediapicker)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.md)
 
