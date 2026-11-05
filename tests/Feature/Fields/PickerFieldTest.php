@@ -89,6 +89,21 @@ class PickerFieldTest extends TestCase
     }
 
     #[Test]
+    public function it_reads_the_model_bound_to_the_form(): void
+    {
+        $user = $this->userWith(['view_media']);
+        $this->actingAs($user);
+
+        $article = $this->article();
+        $media = $this->libraryMedia($user, name: 'ބީޗް');
+        $article->updateAttachmentMedia([$media->id], 'gallery');
+
+        $html = Blade::render('<x-forms::form method="PATCH" action="/articles/1" :model="$article"><x-mediapicker::picker name="gallery" multiple /></x-forms::form>', ['article' => $article]);
+
+        $this->assertStringContainsString('name="gallery[]" value="' . $media->id . '"', $html);
+    }
+
+    #[Test]
     public function an_empty_picker_still_submits_the_field(): void
     {
         $this->actingAs($this->userWith(['view_media']));

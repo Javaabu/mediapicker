@@ -1,0 +1,11 @@
+{
+    "position": 1.31,
+    "label": "Advanced Usage",
+    "collapsible": true,
+    "collapsed": false,
+    "link": {
+        "type": "generated-index",
+        "slug": "/mediapicker/_categories/advanced-usage",
+        "description": "Configuration, the JSON API, permissions, overriding, translations, Dhivehi and RTL, the JavaScript and the API reference."
+    }
+}

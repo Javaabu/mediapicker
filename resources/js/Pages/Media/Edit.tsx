@@ -1,3 +1,4 @@
+import "../../../css/mediapicker.css"
 import { Button, Card, LinkButton } from "@javaabu/forms"
 import { StencilForm, type StencilSchema } from "@javaabu/stencil"
 import { router } from "@inertiajs/react"

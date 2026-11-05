@@ -1,3 +1,4 @@
+import "../../../css/mediapicker.css"
 import { Alert, Button, LinkButton } from "@javaabu/forms"
 import { Link } from "@inertiajs/react"
 import { useMemo, useRef, useState } from "react"

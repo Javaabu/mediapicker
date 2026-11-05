@@ -1,5 +1,5 @@
 {
     "name": "Mediapicker",
-    "description": "Allow for file uploads from a persistent storage",
+    "description": "A media library for Laravel on spatie/laravel-medialibrary: Blade and Inertia React library pages, a picker field, attachments with their own conversions, an image cropper and javaabu/block-editor blocks",
     "version": "1"
 }

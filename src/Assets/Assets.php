@@ -35,6 +35,12 @@ class Assets
                 '@javaabu/forms' => 'github:Javaabu/react-forms#next-gen',
                 '@javaabu/onu' => '^0.2.1',
                 'cropperjs' => '^1.6.2',
+                // @javaabu/onu/media (ImageCropper) loads these when it's imported
+                'react-easy-crop' => '^6.2.4',
+                'signature_pad' => '^5.1.4',
+                'media-chrome' => '^4.19.3',
+                'yet-another-react-lightbox' => '^3.32.2',
+                'uqr' => '^0.1.3',
                 '@tiptap/core' => self::TIPTAP,
             ], [
                 'react' => '^18.3 || ^19.0',

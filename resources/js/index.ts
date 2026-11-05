@@ -3,6 +3,7 @@
  * javaabu/manifest: the React picker, cropper and image components, the framework-free
  * picker dialog, and the library API client.
  */
+import "../css/mediapicker.css"
 export { MediaPicker, type MediaPickerProps } from "./react/MediaPicker"
 export { MediaPickerField, type MediaPickerFieldProps } from "./react/MediaPickerField"
 export { MediaLibraryDialog, type MediaLibraryDialogProps } from "./react/MediaLibraryDialog"

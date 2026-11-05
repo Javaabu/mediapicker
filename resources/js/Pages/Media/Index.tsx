@@ -1,3 +1,4 @@
+import "../../../css/mediapicker.css"
 import { Button, LinkButton } from "@javaabu/forms"
 import { MediaLister, type MediaItem as ListerItem } from "@javaabu/onu"
 import { Link, router } from "@inertiajs/react"

@@ -14,7 +14,7 @@ class AttachmentsClearCommand extends Command
     use ConfirmableTrait;
 
     protected $signature = 'mediapicker:clear {modelType?} {collectionName?}
-    {-- force : Force the operation to run when in production}';
+    {--force : Force the operation to run when in production}';
 
     protected $description = 'Delete all items in an attachment collection.';
 
