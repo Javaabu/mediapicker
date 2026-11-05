@@ -8,6 +8,7 @@ use Javaabu\Mediapicker\Mediapicker;
 use Javaabu\Mediapicker\UrlGenerator\AttachmentUrlGeneratorFactory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\MediaLibrary\Support\FileRemover\DefaultFileRemover;
+use Spatie\MediaLibrary\Support\PathGenerator\PathGeneratorFactory;
 use Spatie\MediaLibrary\Support\UrlGenerator\UrlGenerator;
 
 class AttachmentFileRemover extends DefaultFileRemover
@@ -24,9 +25,11 @@ class AttachmentFileRemover extends DefaultFileRemover
 
     public function removeFromConversionsDirectory(Media $media, string $disk): void
     {
-        $conversionsDirectory = $this->mediaFileSystem->getMediaDirectory($media, 'conversions');
+        $conversionsDirectory = PathGeneratorFactory::create($media)->getPathForConversions($media);
 
-        $remover = $this;
+        if (! $this->filesystem->disk($disk)->directoryExists($conversionsDirectory)) {
+            return;
+        }
 
         collect([$conversionsDirectory])
             ->each(function (string $directory) use ($media, $disk) {

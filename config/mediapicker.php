@@ -7,6 +7,7 @@ use Javaabu\Mediapicker\Models\Attachment;
 use Javaabu\Mediapicker\Models\Media;
 use Javaabu\Mediapicker\Models\Observers\AttachmentObserver;
 use Javaabu\Mediapicker\Models\Observers\MediaObserver;
+use Javaabu\Mediapicker\Policies\MediaPolicy;
 
 return [
 
@@ -101,6 +102,44 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Crop presets
+    |--------------------------------------------------------------------------
+    |
+    | The aspect ratios images can be cropped to (width / height; null crops
+    | freely). Crops are saved per preset on the media and never change the
+    | original. Attachment conversions use one with ->usingCrop('wide').
+    |
+    */
+
+    'crop_presets' => [
+        'square' => ['label' => 'Square', 'aspect' => 1],
+        'wide' => ['label' => 'Wide (16:9)', 'aspect' => 16 / 9],
+        'landscape' => ['label' => 'Landscape (4:3)', 'aspect' => 4 / 3],
+        'portrait' => ['label' => 'Portrait (3:4)', 'aspect' => 3 / 4],
+        'free' => ['label' => 'Free', 'aspect' => null],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pages
+    |--------------------------------------------------------------------------
+    |
+    | views: `blade` (javaabu/forms) or `inertia` (React pages through
+    | javaabu/manifest). The Blade pages extend `layout` and fill
+    | `layout_section`. per_page is the library's page size.
+    |
+    */
+
+    'views' => 'blade',
+
+    'layout' => 'layouts.app',
+
+    'layout_section' => 'content',
+
+    'per_page' => 24,
+
+    /*
+    |--------------------------------------------------------------------------
     | Controllers
     |--------------------------------------------------------------------------
     |
@@ -110,6 +149,21 @@ return [
     */
 
     'media_controller' => MediaController::class,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Permissions and policy
+    |--------------------------------------------------------------------------
+    |
+    | The media permissions are registered with javaabu/permissions (run
+    | `php artisan permissions:sync`). The policy can be swapped here, in
+    | config('permissions.policies') or with Gate::policy().
+    |
+    */
+
+    'register_permissions' => true,
+
+    'policy' => MediaPolicy::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -126,18 +180,4 @@ return [
     ],
 
     'file_remover_class' => AttachmentFileRemover::class,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Views
-    |--------------------------------------------------------------------------
-    */
-
-    'framework' => 'material-admin-26',
-
-    'default_layout' => 'layouts.admin',
-
-    'picker_layout' => 'layouts.admin-blank',
-
-    'scripts_stack' => 'scripts',
 ];

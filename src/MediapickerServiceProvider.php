@@ -2,6 +2,7 @@
 
 namespace Javaabu\Mediapicker;
 
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Javaabu\Mediapicker\AttachmentCollections\AttachmentRepository;
 use Javaabu\Mediapicker\Commands\AttachmentsCleanCommand;
@@ -10,41 +11,111 @@ use Javaabu\Mediapicker\Commands\AttachmentsRegenerateCommand;
 use Javaabu\Mediapicker\Models\Attachment;
 use Javaabu\Mediapicker\Models\Observers\AttachmentObserver;
 use Javaabu\Mediapicker\Models\Observers\MediaObserver;
+use Javaabu\Mediapicker\Policies\MediaPolicy;
+use Javaabu\Mediapicker\Routing\MediapickerRoutes;
+use Javaabu\Permissions\Permissions;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class MediapickerServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap the application services.
-     */
-    public function boot()
+    public function register(): void
     {
-        // declare publishes
-        if ($this->app->runningInConsole()) {
-            $this->publishes([
-                __DIR__ . '/../config/mediapicker.php' => config_path('mediapicker.php'),
-            ], 'mediapicker-config');
+        $this->mergeConfigFrom(__DIR__ . '/../config/mediapicker.php', 'mediapicker');
 
-            $this->publishes([
-                __DIR__ . '/../database/migrations' => database_path('migrations'),
-            ], 'mediapicker-migrations');
+        $this->app->singleton(AttachmentRepository::class, function () {
+            $attachment_class = $this->getAttachmentClass();
 
-            $this->publishes([
-                __DIR__ . '/../resources/views' => resource_path('views/vendor/mediapicker'),
-            ], 'mediapicker-views');
-        }
+            return new AttachmentRepository(new $attachment_class);
+        });
 
+        $this->commands([
+            AttachmentsRegenerateCommand::class,
+            AttachmentsClearCommand::class,
+            AttachmentsCleanCommand::class,
+        ]);
+    }
+
+    public function boot(): void
+    {
+        $this->loadJsonTranslationsFrom(__DIR__ . '/../lang');
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'mediapicker');
 
-        $attachmentClass = $this->getAttachmentClass();
-        $attachmentObserverClass = config('mediapicker.attachment_observer', AttachmentObserver::class);
+        $this->registerObservers();
+        $this->registerRouteMacros();
+        $this->registerPermissions();
 
-        $attachmentClass::observe(new $attachmentObserverClass);
+        if ($this->app->runningInConsole()) {
+            $this->registerMigrations();
+            $this->registerPublishing();
+        }
+    }
 
-        $mediaClass = $this->getMediaClass();
-        $mediaObserverClass = config('mediapicker.media_observer', MediaObserver::class);
+    protected function registerObservers(): void
+    {
+        $attachment_class = $this->getAttachmentClass();
+        $attachment_observer = config('mediapicker.attachment_observer', AttachmentObserver::class);
 
-        $mediaClass::observe(new $mediaObserverClass);
+        $attachment_class::observe(new $attachment_observer);
+
+        $media_class = $this->getMediaClass();
+        $media_observer = config('mediapicker.media_observer', MediaObserver::class);
+
+        $media_class::observe(new $media_observer);
+    }
+
+    protected function registerRouteMacros(): void
+    {
+        Route::macro('mediapicker', function (array $options = []) {
+            MediapickerRoutes::register($this, $options);
+        });
+    }
+
+    /**
+     * view_media, view_others_media, edit_media, edit_others_media, delete_media and
+     * delete_others_media, and the default policy, which the app can override
+     */
+    protected function registerPermissions(): void
+    {
+        if (! config('mediapicker.register_permissions', true)) {
+            return;
+        }
+
+        Permissions::register('media', [
+            'view_media' => 'View the media library',
+            'view_others_media' => 'View media uploaded by others',
+            'edit_media' => 'Upload media and edit your own',
+            'edit_others_media' => 'Edit media uploaded by others',
+            'delete_media' => 'Delete your own media',
+            'delete_others_media' => 'Delete media uploaded by others',
+        ], label: 'Media');
+
+        Permissions::policy(Mediapicker::mediaModel(), config('mediapicker.policy') ?: MediaPolicy::class);
+    }
+
+    protected function registerMigrations(): void
+    {
+        if (Mediapicker::$runs_migrations) {
+            $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        }
+    }
+
+    protected function registerPublishing(): void
+    {
+        $this->publishes([
+            __DIR__ . '/../config/mediapicker.php' => config_path('mediapicker.php'),
+        ], 'mediapicker-config');
+
+        $this->publishes([
+            __DIR__ . '/../database/migrations' => database_path('migrations'),
+        ], 'mediapicker-migrations');
+
+        $this->publishes([
+            __DIR__ . '/../resources/views' => resource_path('views/vendor/mediapicker'),
+        ], 'mediapicker-views');
+
+        $this->publishes([
+            __DIR__ . '/../lang' => lang_path('vendor/mediapicker'),
+        ], 'mediapicker-translations');
     }
 
     protected function getMediaClass(): string
@@ -55,30 +126,5 @@ class MediapickerServiceProvider extends ServiceProvider
     protected function getAttachmentClass(): string
     {
         return config('mediapicker.attachment_model', Attachment::class);
-    }
-
-    /**
-     * Register the application services.
-     */
-    public function register()
-    {
-        // merge package config with user defined config
-        $this->mergeConfigFrom(__DIR__ . '/../config/mediapicker.php', 'mediapicker');
-
-        $this->app->singleton(AttachmentRepository::class, function () {
-            $attachmentClass = $this->getAttachmentClass();
-
-            return new AttachmentRepository(new $attachmentClass);
-        });
-
-        $this->app->bind('command.mediapicker:regenerate', AttachmentsRegenerateCommand::class);
-        $this->app->bind('command.mediapicker:clear', AttachmentsClearCommand::class);
-        $this->app->bind('command.mediapicker:clean', AttachmentsCleanCommand::class);
-
-        $this->commands([
-            'command.mediapicker:regenerate',
-            'command.mediapicker:clear',
-            'command.mediapicker:clean',
-        ]);
     }
 }

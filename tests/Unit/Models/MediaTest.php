@@ -3,7 +3,6 @@
 namespace Javaabu\Mediapicker\Tests\Unit\Models;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Javaabu\Mediapicker\Models\Media;
 use Javaabu\Mediapicker\Tests\TestCase;
@@ -85,7 +84,7 @@ class MediaTest extends TestCase
     }
 
     #[Test]
-    public function it_can_filter_user_visible_media(): void
+    public function it_can_filter_the_media_visible_to_a_user(): void
     {
         $user = $this->getUserWithMedia(name: 'Ahmed');
         $media_1 = $user->getFirstMedia('mediapicker');
@@ -101,16 +100,12 @@ class MediaTest extends TestCase
             return $user->name == 'Mohamed';
         });
 
-        Auth::login($user);
-
-        $media = Media::userVisible()->get();
+        $media = Media::visibleTo($user)->get();
 
         $this->assertCount(1, $media);
         $this->assertEquals($media_1->id, $media->first()->id);
 
-        Auth::login($other_user);
-
-        $media = Media::userVisible()->get();
+        $media = Media::visibleTo($other_user)->get();
 
         $this->assertCount(2, $media);
         $this->assertContains($media_1->id, $media->pluck('id')->all());
