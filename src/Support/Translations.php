@@ -13,9 +13,12 @@ class Translations
     /** The media fields that can be translated */
     public const array FIELDS = ['name', 'description', 'alt', 'caption'];
 
+    /**
+     * Whether javaabu/translatable is installed and its service provider is loaded
+     */
     public static function installed(): bool
     {
-        return class_exists(Translatable::class);
+        return class_exists(Translatable::class) && app()->bound('languages');
     }
 
     public static function enabled(): bool

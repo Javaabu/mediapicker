@@ -2,6 +2,7 @@
 
 namespace Javaabu\Mediapicker;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use InvalidArgumentException;
@@ -9,6 +10,8 @@ use Javaabu\Mediapicker\Contracts\Attachment;
 use Javaabu\Mediapicker\Http\Controllers\MediaController;
 use Javaabu\Mediapicker\Models\Media;
 use Javaabu\Mediapicker\Routing\MediapickerRoutes;
+use Javaabu\Mediapicker\Support\ImageData;
+use Javaabu\Mediapicker\Support\PickerConfig;
 use Spatie\MediaLibrary\MediaCollections\Models\Media as BaseMedia;
 
 class Mediapicker
@@ -102,5 +105,26 @@ class Mediapicker
         }
 
         return route($name, $parameters);
+    }
+
+    /**
+     * What React pickers need (library URL, file types, limits, crop presets, strings).
+     * Share it with Inertia: `'mediapicker' => fn () => Mediapicker::pickerConfig()`.
+     *
+     * @return array<string, mixed>
+     */
+    public static function pickerConfig(?string $route_name = null): array
+    {
+        return PickerConfig::make($route_name);
+    }
+
+    /**
+     * An attached image as data for React's `<Picture>`
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function image(Model|Attachment|null $subject, string $collection = 'default', string $conversion = '', ?string $sizes = null): ?array
+    {
+        return ImageData::for($subject, $collection, $conversion, $sizes);
     }
 }

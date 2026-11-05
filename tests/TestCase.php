@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
+use Inertia\ServiceProvider as InertiaServiceProvider;
 use Javaabu\Forms\FormsServiceProvider;
 use Javaabu\Manifest\ManifestServiceProvider;
 use Javaabu\Mediapicker\MediapickerServiceProvider;
@@ -38,6 +39,8 @@ abstract class TestCase extends BaseTestCase
 
         View::addLocation(__DIR__ . '/TestSupport/views');
 
+        $this->withoutVite();
+
         $this->setUpTempTestFiles();
     }
 
@@ -57,6 +60,7 @@ abstract class TestCase extends BaseTestCase
             FormsServiceProvider::class,
             StencilServiceProvider::class,
             MediaLibraryServiceProvider::class,
+            InertiaServiceProvider::class,
             MediapickerServiceProvider::class,
             TestServiceProvider::class,
         ];
@@ -76,6 +80,7 @@ abstract class TestCase extends BaseTestCase
         $config->set('permission.models.role', Role::class);
         $config->set('permissions.guards', ['web', 'web_admin']);
         $config->set('mediapicker.layout', 'layouts.app');
+        $config->set('inertia.testing.ensure_pages_exist', false);
 
         $config->set('auth.guards', [
             'web' => [

@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Javaabu\Manifest\Concerns\RegistersAssets;
+use Javaabu\Manifest\Package;
+use Javaabu\Mediapicker\Assets\Assets;
 use Javaabu\Mediapicker\AttachmentCollections\AttachmentRepository;
 use Javaabu\Mediapicker\Commands\AttachmentsCleanCommand;
 use Javaabu\Mediapicker\Commands\AttachmentsClearCommand;
@@ -22,9 +25,13 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class MediapickerServiceProvider extends ServiceProvider
 {
+    use RegistersAssets;
+
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/mediapicker.php', 'mediapicker');
+
+        $this->registerAssets(Assets::PACKAGE, __DIR__ . '/../resources', fn (Package $package) => Assets::register($package));
 
         $this->app->singleton(AttachmentRepository::class, function () {
             $attachment_class = $this->getAttachmentClass();

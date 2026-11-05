@@ -404,8 +404,7 @@ class InteractsWithAttachmentsTest extends TestCase
         // Update with a new set of media IDs (remove one, keep one, add one)
         $result = $post->updateAttachmentMedia([$media1->id, $media3->id]);
 
-        $this->assertCount(1, $result);
-        $this->assertEquals($media3->id, $result->first()->media_id);
+        $this->assertEquals([$media1->id, $media3->id], $result->pluck('media_id')->all());
 
         // Check database
         $this->assertDatabaseHas('attachments', [
@@ -423,6 +422,63 @@ class InteractsWithAttachmentsTest extends TestCase
             'model_type' => 'post',
             'media_id' => $media2->id,
         ]);
+    }
+
+    #[Test]
+    public function it_reorders_attached_media(): void
+    {
+        $post = Post::factory()->create();
+        $first = $this->getMedia();
+        $second = $this->getMedia();
+
+        $post->updateAttachmentMedia([$first->id, $second->id], 'gallery');
+        $post->updateAttachmentMedia([$second->id, $first->id], 'gallery');
+
+        $this->assertEquals([$second->id, $first->id], $post->fresh()->getAttachments('gallery')->pluck('media_id')->all());
+        $this->assertCount(2, $post->fresh()->attachments);
+    }
+
+    #[Test]
+    public function it_numbers_the_order_from_one_on_every_update(): void
+    {
+        $post = Post::factory()->create();
+        $other = Post::factory()->create();
+        $media = $this->getMedia();
+
+        $post->updateAttachmentMedia([$media->id], 'gallery');
+        $other->updateAttachmentMedia([$media->id], 'gallery');
+
+        $this->assertEquals(1, $other->getFirstAttachment('gallery')->order_column);
+    }
+
+    #[Test]
+    public function it_clears_a_collection_with_no_media(): void
+    {
+        $post = Post::factory()->create();
+        $post->updateAttachmentMedia([$this->getMedia()->id], 'gallery');
+
+        $post->updateAttachmentMedia(['', null], 'gallery');
+
+        $this->assertFalse($post->fresh()->hasAttachments('gallery'));
+    }
+
+    #[Test]
+    public function it_syncs_a_collection_from_a_picker_field_in_the_request(): void
+    {
+        $post = Post::factory()->create();
+        $first = $this->getMedia();
+        $second = $this->getMedia();
+
+        $this->assertNull($post->syncAttachmentsFromRequest('gallery', request: Request::create('/', 'POST', [])));
+
+        $post->syncAttachmentsFromRequest('gallery', request: Request::create('/', 'POST', ['gallery' => [$second->id, $first->id]]));
+        $this->assertEquals([$second->id, $first->id], $post->fresh()->getAttachments('gallery')->pluck('media_id')->all());
+
+        $post->syncAttachmentsFromRequest('featured', 'featured_image', Request::create('/', 'POST', ['featured_image' => (string) $first->id]));
+        $this->assertEquals($first->id, $post->fresh()->getFirstAttachmentMedia('featured')->id);
+
+        $post->syncAttachmentsFromRequest('gallery', request: Request::create('/', 'POST', ['gallery' => '']));
+        $this->assertFalse($post->fresh()->hasAttachments('gallery'));
     }
 
     #[Test]

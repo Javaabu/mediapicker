@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Javaabu\Mediapicker\AttachmentCollections\AttachmentRepository;
 use Javaabu\Mediapicker\AttachmentCollections\Events\AttachmentCollectionHasBeenClearedEvent;
@@ -204,8 +205,9 @@ trait InteractsWithAttachments
         $attachmentClass = $this->getAttachmentModel();
 
         return collect($newAttachmentsArray)
-            ->map(function (array $newAttachmentItem) use ($collectionName, $attachmentClass) {
-                static $orderColumn = 1;
+            ->values()
+            ->map(function (array $newAttachmentItem, int $index) use ($collectionName, $attachmentClass) {
+                $orderColumn = $index + 1;
 
                 $currentAttachment = $attachmentClass::findOrFail($newAttachmentItem['id']);
 
@@ -213,7 +215,7 @@ trait InteractsWithAttachments
                     throw AttachmentCannotBeUpdated::doesNotBelongToCollection($collectionName, $currentAttachment);
                 }
 
-                $currentAttachment->order_column = $orderColumn++;
+                $currentAttachment->order_column = $orderColumn;
 
                 $currentAttachment->save();
 
@@ -251,42 +253,60 @@ trait InteractsWithAttachments
     }
 
     /**
-     * Update an attachment collection by deleting and inserting media again with new values.
+     * Make the collection hold exactly these media, in this order: attaches new ones, keeps
+     * (and reorders) the ones already attached, and removes the rest. An empty array
+     * clears the collection.
      *
-     *
+     * @param  array<int, int|string>  $newMediaArray  media ids
+     * @return Collection<int, Attachment>
      *
      * @throws AttachmentCannotBeUpdated
      */
     public function updateAttachmentMedia(array $newMediaArray, string $collectionName = 'default'): Collection
     {
-        $this->removeAttachmentMediaNotPresentInArray($newMediaArray, $collectionName);
+        $media_ids = array_values(array_unique(array_map('intval', array_filter($newMediaArray, fn ($id) => filled($id)))));
 
-        // filter out already attached media
-        $existing_media = $this->getAttachments($collectionName)
-            ->pluck('media_id')
-            ->all();
+        $this->removeAttachmentMediaNotPresentInArray($media_ids, $collectionName);
 
-        $newMediaArray = array_diff($newMediaArray, $existing_media);
+        $existing = $this->getAttachments($collectionName)->keyBy('media_id');
 
-        // only include distince values
-        $newMediaArray = array_unique($newMediaArray);
+        $attachments = collect($media_ids)
+            ->map(function (int $media_id, int $index) use ($collectionName, $existing) {
+                $attachment = $existing->get($media_id)
+                    ?? $this->addAttachment($media_id)->toAttachmentCollection($collectionName);
 
-        return collect($newMediaArray)
-            ->map(function ($newMediaId) use ($collectionName) {
-                static $orderColumn = 1;
-
-                $currentAttachment = $this->getFirstAttachment($collectionName, ['media_id' => $newMediaId]);
-
-                if (! $currentAttachment) {
-                    $currentAttachment = $this->addAttachment($newMediaId)
-                        ->toAttachmentCollection($collectionName);
+                if ((int) $attachment->order_column !== $index + 1) {
+                    $attachment->order_column = $index + 1;
+                    $attachment->save();
                 }
 
-                $currentAttachment->order_column = $orderColumn++;
-                $currentAttachment->save();
-
-                return $currentAttachment;
+                return $attachment;
             });
+
+        if ($this->attachmentsIsPreloaded()) {
+            $this->unsetRelation('attachments');
+        }
+
+        return $attachments;
+    }
+
+    /**
+     * Update a collection from a picker field in the request: one id, a list of ids, or an
+     * empty value to clear it. Leaves the collection alone when the request doesn't have
+     * the field. Validate the ids with the `LibraryMedia` rule first.
+     *
+     * @return Collection<int, Attachment>|null
+     */
+    public function syncAttachmentsFromRequest(string $collectionName, ?string $key = null, ?Request $request = null): ?Collection
+    {
+        $request ??= request();
+        $key ??= $collectionName;
+
+        if (! $request->exists($key)) {
+            return null;
+        }
+
+        return $this->updateAttachmentMedia(Arr::wrap($request->input($key)), $collectionName);
     }
 
     /**

@@ -24,6 +24,7 @@ use Javaabu\Mediapicker\Http\Resources\MediaResource;
 use Javaabu\Mediapicker\Mediapicker;
 use Javaabu\Mediapicker\Models\Media;
 use Javaabu\Mediapicker\Routing\MediapickerRoutes;
+use Javaabu\Mediapicker\Stencil\MediaDetailsForm;
 use Javaabu\Mediapicker\Support\CropPresets;
 use Javaabu\Mediapicker\Support\FileTypes;
 use Javaabu\Mediapicker\Support\Strings;
@@ -126,6 +127,7 @@ class MediaController extends Controller
 
         return $this->views->render('media.edit', [
             'media' => $this->views->isInertia() ? $this->resource($request, $media)->resolve($request) : $media,
+            'form' => $this->detailsForm($request, $media),
             ...$this->pageData($request, $media),
             'title' => __('Edit :name', ['name' => $media->name]),
         ]);
@@ -189,6 +191,17 @@ class MediaController extends Controller
         return redirect()
             ->to($this->url($request, 'edit', $media))
             ->with('success', __('The crop was saved.'));
+    }
+
+    /**
+     * The form for a media's details, defined once with javaabu/stencil
+     */
+    protected function detailsForm(Request $request, Media $media): MediaDetailsForm
+    {
+        return MediaDetailsForm::make()
+            ->model($media)
+            ->action($this->url($request, 'update', $media))
+            ->method('PATCH');
     }
 
     /**
@@ -341,7 +354,11 @@ class MediaController extends Controller
             ? $request->query($key)
             : null;
 
-        $orderby = in_array($request->query('orderby'), self::ORDERBYS, true) ? $request->query('orderby') : 'created_at';
+        [$sort_by, $sort_order] = array_pad(explode(':', (string) $request->query('sort', '')), 2, null);
+
+        $orderby = $request->query('orderby', $sort_by);
+        $orderby = in_array($orderby, self::ORDERBYS, true) ? $orderby : 'created_at';
+        $order = $request->query('order', $sort_order);
 
         return [
             'search' => is_string($request->query('search')) ? trim($request->query('search')) : null,
@@ -350,7 +367,7 @@ class MediaController extends Controller
             'date_from' => $date('date_from'),
             'date_to' => $date('date_to'),
             'orderby' => $orderby,
-            'order' => $request->query('order') === 'asc' ? 'asc' : 'desc',
+            'order' => $order === 'asc' ? 'asc' : 'desc',
             'per_page' => min(max($request->integer('per_page', config('mediapicker.per_page', 24)), 1), 100),
             'view' => $request->query('view') === 'list' ? 'list' : 'grid',
         ];
