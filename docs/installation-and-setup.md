@@ -153,7 +153,7 @@ The pages and the picker use javaabu/forms v2 components, and their scripts and 
 Install `inertiajs/inertia-laravel` and set `'views' => 'inertia'`. The pages are `mediapicker::Media/Index`, `Create`, `Edit` and `Show`, resolved by `@javaabu/manifest/inertia`'s `resolvePage()`. Install what they import:
 
 ```bash
-php artisan manifest:check   # lists the npm packages the app needs
+php artisan manifest:check   # lists the npm packages the app needs, the React ones once @inertiajs/react is installed
 ```
 
 Share the picker config with every page, so React pickers know the library:

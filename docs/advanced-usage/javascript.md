@@ -53,4 +53,8 @@ It's a native `<dialog>`: focus stays inside, Escape cancels, items are toggle b
 
 # npm packages the app needs
 
-The React components import `@javaabu/forms`, `@javaabu/onu` (`MediaLister`, and `ImageCropper` from `@javaabu/onu/media`, which loads `react-easy-crop`, `signature_pad`, `media-chrome`, `yet-another-react-lightbox` and `uqr`), `@inertiajs/react` (pages), `cropperjs` (cropper) and `@tiptap/core` (blocks). Run `php artisan manifest:check` to list what's missing.
+Blade apps need only what the Blade scripts import: `cropperjs` (cropper) and `@tiptap/core` (blocks), besides `vite` and `laravel-vite-plugin` when they build with Vite. The package declares these for its assets.
+
+The React components and Inertia pages also import `@javaabu/forms`, `@javaabu/onu` (`MediaLister`, and `ImageCropper` from `@javaabu/onu/media`, which loads `react-easy-crop`, `signature_pad`, `media-chrome`, `yet-another-react-lightbox` and `uqr`), `react`, `react-dom` and `@inertiajs/react`. The package declares these for pages (`npm(..., for: 'pages')`), so `php artisan manifest:check` asks for them only when the app's `package.json` has an Inertia adapter. An app that imports the React components without Inertia runs `php artisan manifest:check --scope=assets --scope=pages`.
+
+Run `php artisan manifest:check` to list what's missing.

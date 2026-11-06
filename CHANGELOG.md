@@ -10,6 +10,7 @@ The first release. Compared with the unreleased version on `main` (see `docs/upg
 - `Route::mediapicker()` with a guard, prefix, name, middleware and controller; overridable controller; every action answers JSON
 - Permissions and an overridable `MediaPolicy` through javaabu/permissions; a library per guard
 - Library pages in Blade (javaabu/forms v2) and Inertia React (@javaabu/forms and Onu, through javaabu/manifest)
+- npm dependencies split by scope: Blade apps are asked for `cropperjs` and `@tiptap/core` only; the React and Inertia packages are declared `for: 'pages'` (javaabu/manifest#17)
 - `<x-mediapicker::picker>`, React `MediaPicker`/`MediaPickerField`/`MediaLibraryDialog`, and the stencil `MediaPickerField`; the `LibraryMedia` rule and `syncAttachmentsFromRequest()`
 - Fingerprinted attachment conversions: shared between models, never made twice, extra formats (WebP, AVIF), responsive widths; `<x-mediapicker::image>` and React `<Picture>`
 - Non-destructive cropping to aspect-ratio presets, on upload and later, driving conversions
