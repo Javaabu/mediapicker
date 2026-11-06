@@ -16,4 +16,4 @@ The first release. Compared with the unreleased version on `main` (see `docs/upg
 - Image, gallery, file and video blocks for javaabu/block-editor
 - Optional javaabu/translatable support for names, descriptions, alt text and captions
 - Dhivehi translations and RTL layouts
-- Docs, `llms.txt`, and a Laravel Boost guideline and skill
+- Docs, `llms.txt`, and a Laravel Boost guideline (in a verbatim block, tested with Boost's own renderer) and skill
