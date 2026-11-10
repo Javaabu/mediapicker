@@ -4,10 +4,7 @@ namespace Javaabu\Mediapicker\Tests\Unit\Conversions;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Javaabu\Mediapicker\Conversions\AttachmentConversionCollection;
-use Javaabu\Mediapicker\Models\Attachment;
 use Javaabu\Mediapicker\Tests\TestCase;
-use Javaabu\Mediapicker\Tests\TestSupport\Models\Post;
-use Javaabu\Mediapicker\Tests\TestSupport\Models\User;
 use PHPUnit\Framework\Attributes\Test;
 
 class AttachmentConversionCollectionTest extends TestCase

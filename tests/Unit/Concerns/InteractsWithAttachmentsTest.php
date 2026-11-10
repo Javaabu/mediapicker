@@ -14,6 +14,7 @@ use Javaabu\Mediapicker\AttachmentCollections\MediaAdder;
 use Javaabu\Mediapicker\Models\Attachment;
 use Javaabu\Mediapicker\Models\Media;
 use Javaabu\Mediapicker\Tests\TestCase;
+use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithIdenticalConversions;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\Post;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\MediaLibrary\Conversions\Conversion;
@@ -37,13 +38,13 @@ class InteractsWithAttachmentsTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('posts', [
-            'id' => $post->id
+            'id' => $post->id,
         ]);
 
         $post->delete();
 
         $this->assertDatabaseMissing('posts', [
-            'id' => $post->id
+            'id' => $post->id,
         ]);
 
         $this->assertDatabaseMissing('attachments', [
@@ -55,7 +56,7 @@ class InteractsWithAttachmentsTest extends TestCase
     #[Test]
     public function it_can_get_the_attachment_model(): void
     {
-        $post = new Post();
+        $post = new Post;
 
         $this->assertEquals(Attachment::class, $post->getAttachmentModel());
     }
@@ -97,7 +98,6 @@ class InteractsWithAttachmentsTest extends TestCase
         $model = $this->getModel();
         $media = $this->getMedia();
 
-
         Route::post('/add-attachment', function () {
             /** @var Post $model */
             $model = Post::first();
@@ -119,7 +119,7 @@ class InteractsWithAttachmentsTest extends TestCase
             'model_id' => $model->getKey(),
             'model_type' => 'post',
             'order_column' => 1,
-            'collection_name' => 'default'
+            'collection_name' => 'default',
         ]);
     }
 
@@ -131,7 +131,6 @@ class InteractsWithAttachmentsTest extends TestCase
         $model = $this->getModel();
         $media_1 = $this->getMedia();
         $media_2 = $this->getMedia();
-
 
         Route::post('/add-attachments', function () {
             /** @var Post $model */
@@ -149,7 +148,7 @@ class InteractsWithAttachmentsTest extends TestCase
 
         $this->post('/add-attachments', [
             'media_1' => $media_1->getKey(),
-            'media_2' => $media_2->getKey()
+            'media_2' => $media_2->getKey(),
         ])->assertSuccessful();
 
         $this->assertDatabaseHas('attachments', [
@@ -157,7 +156,7 @@ class InteractsWithAttachmentsTest extends TestCase
             'model_id' => $model->getKey(),
             'model_type' => 'post',
             'order_column' => 1,
-            'collection_name' => 'default'
+            'collection_name' => 'default',
         ]);
 
         $this->assertDatabaseHas('attachments', [
@@ -165,7 +164,7 @@ class InteractsWithAttachmentsTest extends TestCase
             'model_id' => $model->getKey(),
             'model_type' => 'post',
             'order_column' => 2,
-            'collection_name' => 'default'
+            'collection_name' => 'default',
         ]);
     }
 
@@ -405,8 +404,7 @@ class InteractsWithAttachmentsTest extends TestCase
         // Update with a new set of media IDs (remove one, keep one, add one)
         $result = $post->updateAttachmentMedia([$media1->id, $media3->id]);
 
-        $this->assertCount(1, $result);
-        $this->assertEquals($media3->id, $result->first()->media_id);
+        $this->assertEquals([$media1->id, $media3->id], $result->pluck('media_id')->all());
 
         // Check database
         $this->assertDatabaseHas('attachments', [
@@ -424,6 +422,63 @@ class InteractsWithAttachmentsTest extends TestCase
             'model_type' => 'post',
             'media_id' => $media2->id,
         ]);
+    }
+
+    #[Test]
+    public function it_reorders_attached_media(): void
+    {
+        $post = Post::factory()->create();
+        $first = $this->getMedia();
+        $second = $this->getMedia();
+
+        $post->updateAttachmentMedia([$first->id, $second->id], 'gallery');
+        $post->updateAttachmentMedia([$second->id, $first->id], 'gallery');
+
+        $this->assertEquals([$second->id, $first->id], $post->fresh()->getAttachments('gallery')->pluck('media_id')->all());
+        $this->assertCount(2, $post->fresh()->attachments);
+    }
+
+    #[Test]
+    public function it_numbers_the_order_from_one_on_every_update(): void
+    {
+        $post = Post::factory()->create();
+        $other = Post::factory()->create();
+        $media = $this->getMedia();
+
+        $post->updateAttachmentMedia([$media->id], 'gallery');
+        $other->updateAttachmentMedia([$media->id], 'gallery');
+
+        $this->assertEquals(1, $other->getFirstAttachment('gallery')->order_column);
+    }
+
+    #[Test]
+    public function it_clears_a_collection_with_no_media(): void
+    {
+        $post = Post::factory()->create();
+        $post->updateAttachmentMedia([$this->getMedia()->id], 'gallery');
+
+        $post->updateAttachmentMedia(['', null], 'gallery');
+
+        $this->assertFalse($post->fresh()->hasAttachments('gallery'));
+    }
+
+    #[Test]
+    public function it_syncs_a_collection_from_a_picker_field_in_the_request(): void
+    {
+        $post = Post::factory()->create();
+        $first = $this->getMedia();
+        $second = $this->getMedia();
+
+        $this->assertNull($post->syncAttachmentsFromRequest('gallery', request: Request::create('/', 'POST', [])));
+
+        $post->syncAttachmentsFromRequest('gallery', request: Request::create('/', 'POST', ['gallery' => [$second->id, $first->id]]));
+        $this->assertEquals([$second->id, $first->id], $post->fresh()->getAttachments('gallery')->pluck('media_id')->all());
+
+        $post->syncAttachmentsFromRequest('featured', 'featured_image', Request::create('/', 'POST', ['featured_image' => (string) $first->id]));
+        $this->assertEquals($first->id, $post->fresh()->getFirstAttachmentMedia('featured')->id);
+
+        $post->syncAttachmentsFromRequest('gallery', request: Request::create('/', 'POST', ['gallery' => '']));
+        $this->assertFalse($post->fresh()->hasAttachments('gallery'));
     }
 
     #[Test]
@@ -534,7 +589,7 @@ class InteractsWithAttachmentsTest extends TestCase
 
         // Create a request with media_id
         $request = new Request([
-            'avatar' => $media->id
+            'avatar' => $media->id,
         ]);
 
         // Update the attachment
@@ -547,7 +602,7 @@ class InteractsWithAttachmentsTest extends TestCase
         // Test clearing the attachment
         $clearRequest = new Request([
             'avatar' => null,
-            'clear_file' => true
+            'clear_file' => true,
         ]);
 
         $clearResult = $post->updateSingleAttachment('avatar', $clearRequest);
@@ -581,13 +636,14 @@ class InteractsWithAttachmentsTest extends TestCase
 
         $media = $this->getMedia();
 
-        $attachment = $model->addAttachment($media)
+        $model->addAttachment($media)
             ->toAttachmentCollection();
 
         $path = $model->getFirstAttachmentPath(conversionName: 'test');
 
-        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path);
+        $this->assertMatchesRegularExpression('#/' . $media->getKey() . '/conversions/attachments/test-test-[0-9a-f]{10}\.jpg$#', $path);
         $this->assertFileExists($path);
+        $this->assertEquals(['width' => 100, 'height' => 100], $this->getImageDimensions($path));
     }
 
     #[Test]
@@ -602,44 +658,50 @@ class InteractsWithAttachmentsTest extends TestCase
 
         $path = $model->getFirstAttachmentPath(conversionName: 'test');
 
-        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path);
-        $this->assertDirectoryExists($this->getMediaDirectory($media->getKey()));
         $this->assertFileExists($path);
 
         $media->delete();
 
         $this->assertFileDoesNotExist($path);
-
         $this->assertDirectoryDoesNotExist($this->getMediaDirectory($media->getKey()));
     }
 
     #[Test]
-    public function it_reuses_conversions_from_other_models(): void
+    public function it_shares_the_files_of_identical_conversions_of_different_models(): void
+    {
+        $model = $this->getModelWithConversions();
+        $model_2 = ModelWithIdenticalConversions::factory()->create();
+
+        $media = $this->getMedia();
+
+        $model->addAttachment($media)->toAttachmentCollection();
+
+        $path = $model->getFirstAttachmentPath(conversionName: 'test');
+        $modified = filemtime($path);
+
+        $model_2->addAttachment($media)->toAttachmentCollection();
+
+        $this->assertEquals($path, $model_2->getFirstAttachmentPath(conversionName: 'test'));
+        $this->assertEquals($modified, filemtime($path));
+        $this->assertCount(1, glob($this->getMediaDirectory($media->getKey() . '/conversions/attachments/*')));
+    }
+
+    #[Test]
+    public function it_keeps_same_named_conversions_of_different_models_apart(): void
     {
         $model = $this->getModelWithConversions();
         $model_2 = $this->getModelWithSameConversions();
 
         $media = $this->getMedia();
 
-        $attachment = $model->addAttachment($media)
-            ->toAttachmentCollection();
+        $model->addAttachment($media)->toAttachmentCollection();
+        $model_2->addAttachment($media)->toAttachmentCollection();
 
         $path = $model->getFirstAttachmentPath(conversionName: 'test');
-
-        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path);
-        $this->assertFileExists($path);
-
-        $file_hash = hash_file('sha256', $path);
-
-        $attachment_2 = $model_2->addAttachment($media)
-            ->toAttachmentCollection();
-
         $path_2 = $model_2->getFirstAttachmentPath(conversionName: 'test');
 
-        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path_2);
-        $this->assertFileExists($path_2);
-
-        $file_hash_2 =  hash_file('sha256', $path_2);
-        $this->assertEquals($file_hash, $file_hash_2);
+        $this->assertNotEquals($path, $path_2);
+        $this->assertEquals(['width' => 100, 'height' => 100], $this->getImageDimensions($path));
+        $this->assertEquals(['width' => 50, 'height' => 50], $this->getImageDimensions($path_2));
     }
 }

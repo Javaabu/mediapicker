@@ -6,40 +6,31 @@ use Illuminate\Contracts\Auth\Access\Authorizable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-interface MediaOwner extends HasMedia, Authorizable
+/**
+ * A user model with a media library: any guard's user can be an owner
+ *
+ * Use the `OwnsMedia` trait to implement it. What an owner may do in the library is decided
+ * by the media policy (`view_media`, `edit_media`, … through javaabu/permissions).
+ */
+interface MediaOwner extends Authorizable, HasMedia
 {
-    /*
-     * Register the media picker collections.
+    /**
+     * Register the library collection
      */
-    public function registerMediapickerCollections();
+    public function registerMediapickerCollections(): void;
 
-    /*
-     * Register the media picker conversions.
+    /**
+     * Register the library thumbnail and preview conversions
      */
-    public function registerMediapickerConversions(?Media $media = null);
+    public function registerMediapickerConversions(?Media $media = null): void;
 
+    /**
+     * The media collection that holds this owner's library uploads
+     */
     public function getMediapickerCollectionName(): string;
 
-    /*
-     * Check if can owns the given media
+    /**
+     * Whether this owner uploaded the media
      */
     public function ownsMedia(Media $media): bool;
-
-    public function canViewAnyMedia(): bool;
-
-    public function canCreateMedia(): bool;
-
-    public function canDeleteAnyMedia(): bool;
-
-    public function canViewOthersMedia(): bool;
-
-    public function canEditOthersMedia(): bool;
-
-    public function canDeleteOthersMedia(): bool;
-
-    public function canViewMedia(Media $media): bool;
-
-    public function canEditMedia(Media $media): bool;
-
-    public function canDeleteMedia(Media $media): bool;
 }

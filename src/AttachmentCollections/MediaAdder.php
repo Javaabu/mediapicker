@@ -10,9 +10,9 @@ use Javaabu\Mediapicker\AttachmentCollections\Exceptions\UnknownType;
 use Javaabu\Mediapicker\Contracts\Attachment;
 use Javaabu\Mediapicker\Contracts\HasAttachments;
 use Javaabu\Mediapicker\Mediapicker;
+use Spatie\MediaLibrary\MediaCollections\File as PendingFile;
 use Spatie\MediaLibrary\MediaCollections\MediaCollection;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Spatie\MediaLibrary\MediaCollections\File as PendingFile;
 
 class MediaAdder
 {
@@ -156,8 +156,4 @@ class MediaAdder
             throw MediaUnacceptableForCollection::create($media, $collection, $this->subject);
         }
     }
-
-
-
-
 }

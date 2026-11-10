@@ -7,7 +7,11 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class MediaObserver
 {
-    public function deleted(Media $media): void
+    /**
+     * Remove the attachment conversions while the media's attachments still exist (the
+     * database deletes them with the media)
+     */
+    public function deleting(Media $media): void
     {
         if (method_exists($media, 'isForceDeleting') && ! $media->isForceDeleting()) {
             return;

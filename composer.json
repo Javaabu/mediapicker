@@ -1,12 +1,15 @@
 {
     "name": "javaabu/mediapicker",
-    "description": "Allow for file uploads from a persistent storage",
+    "description": "A media library for Laravel on spatie/laravel-medialibrary: Blade and Inertia React library pages, a picker field, attachments with their own conversions, an image cropper and javaabu/block-editor blocks",
     "homepage": "https://github.com/Javaabu/mediapicker",
     "license": "MIT",
     "keywords": [
         "javaabu",
         "laravel",
-        "mediapicker"
+        "mediapicker",
+        "media-library",
+        "cropper",
+        "block-editor"
     ],
     "authors": [
         {
@@ -20,18 +23,64 @@
             "role": "Developer"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/Javaabu/block-editor",
+            "no-api": true
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Javaabu/forms",
+            "no-api": true
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Javaabu/manifest",
+            "no-api": true
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Javaabu/permissions",
+            "no-api": true
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Javaabu/stencil",
+            "no-api": true
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/n4ff4h/translatable",
+            "no-api": true
+        }
+    ],
     "require": {
-        "php": "^8.2",
-        "illuminate/support": "^10.2 || ^11.0 || ^12.0 || ^13.0",
-        "spatie/laravel-medialibrary": "^11.12",
-        "javaabu/helpers": "^1.70",
-        "javaabu/activitylog": "^1.5",
-        "javaabu/forms": "^1.67"
+        "php": "^8.4",
+        "illuminate/database": "^12.0 || ^13.0",
+        "illuminate/http": "^12.0 || ^13.0",
+        "illuminate/routing": "^12.0 || ^13.0",
+        "illuminate/support": "^12.0 || ^13.0",
+        "illuminate/view": "^12.0 || ^13.0",
+        "javaabu/block-editor": "^1.0@dev",
+        "javaabu/forms": "^2.0@dev",
+        "javaabu/manifest": "^1.0@dev",
+        "javaabu/permissions": "^3.0@dev",
+        "javaabu/stencil": "^1.0@dev",
+        "spatie/laravel-medialibrary": "^11.17"
     },
     "require-dev": {
-        "laravel/pint": "^1.14",
-        "orchestra/testbench": "^8.0 || ^9.16 || ^10.0 || ^11.0",
-        "phpunit/phpunit": "^10.5 || ^11.5.3 || ^12.5.8 || ^13.0.3"
+        "inertiajs/inertia-laravel": "^2.0",
+        "javaabu/boost-javaabu-guidelines": "^1.0",
+        "javaabu/translatable": "^3.0@dev",
+        "laravel/boost": "^2.10",
+        "laravel/pint": "^1.24",
+        "orchestra/testbench": "^10.0 || ^11.0",
+        "phpunit/phpunit": "^11.5.3 || ^12.5.8"
+    },
+    "suggest": {
+        "inertiajs/inertia-laravel": "Renders the media library pages with Inertia React when mediapicker.views is inertia (^2.0)",
+        "javaabu/translatable": "Translates media names, descriptions, alt text and captions (^3.0)"
     },
     "autoload": {
         "psr-4": {
@@ -43,15 +92,24 @@
             "Javaabu\\Mediapicker\\Tests\\": "tests/"
         }
     },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-clover build/coverage.xml",
+        "lint": "vendor/bin/pint --test",
+        "format": "vendor/bin/pint"
+    },
     "extra": {
         "branch-alias": {
-            "dev-main": "1.0-dev"
+            "dev-next-gen": "1.x-dev"
         },
         "laravel": {
             "providers": [
                 "Javaabu\\Mediapicker\\MediapickerServiceProvider"
             ]
         }
+    },
+    "config": {
+        "sort-packages": true
     },
     "minimum-stability": "dev",
     "prefer-stable": true

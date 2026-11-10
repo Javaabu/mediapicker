@@ -2,294 +2,492 @@
 
 namespace Javaabu\Mediapicker\Http\Controllers;
 
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Log;
-use Javaabu\Helpers\Http\Controllers\Controller;
+use Illuminate\Contracts\Support\Responsable;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Javaabu\Helpers\Media\AllowedMimeTypes;
-use Javaabu\Helpers\Traits\HasOrderbys;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Javaabu\Mediapicker\Contracts\MediaOwner;
-use Javaabu\Mediapicker\Http\Requests\MediaRequest;
+use Javaabu\Mediapicker\Cropping\Cropper;
+use Javaabu\Mediapicker\Http\Requests\StoreMediaRequest;
+use Javaabu\Mediapicker\Http\Requests\UpdateMediaRequest;
+use Javaabu\Mediapicker\Http\Resources\MediaResource;
 use Javaabu\Mediapicker\Mediapicker;
 use Javaabu\Mediapicker\Models\Media;
+use Javaabu\Mediapicker\Routing\MediapickerRoutes;
+use Javaabu\Mediapicker\Stencil\MediaDetailsForm;
+use Javaabu\Mediapicker\Support\CropPresets;
+use Javaabu\Mediapicker\Support\FileTypes;
+use Javaabu\Mediapicker\Support\Strings;
+use Javaabu\Mediapicker\Support\Translations;
+use Javaabu\Mediapicker\Views\ViewRenderer;
 use Spatie\Image\Image;
+use Throwable;
 
+/**
+ * The media library: the library pages, uploads, details, crops and bulk deletes
+ *
+ * Every action answers JSON when the request expects it (the pickers use that), and a Blade
+ * or Inertia page otherwise. Override it with `config('mediapicker.media_controller')`, the
+ * `controller` option of `Route::mediapicker()`, or by binding a subclass in the container.
+ */
 class MediaController extends Controller
 {
-    use HasOrderbys;
+    /** The orders the library can be sorted by */
+    public const array ORDERBYS = ['created_at', 'name', 'size', 'id'];
 
-    /**
-     * Initialize orderbys
-     */
-    protected static function initOrderbys()
+    public function __construct(
+        protected ViewRenderer $views,
+    ) {}
+
+    public function index(Request $request): View|Responsable|JsonResponse
     {
-        static::$orderbys = [
-            'name'       => __('Name'),
-            'created_at' => __('Created At'),
-            'id'         => __('ID'),
-        ];
+        $this->authorizeAbility($request, 'viewAny', Mediapicker::mediaModel());
+
+        $filters = $this->filters($request);
+
+        $media = $this->query($request, $filters)
+            ->with('model')
+            ->paginate($filters['per_page'])
+            ->withQueryString();
+
+        if ($request->expectsJson()) {
+            return $this->resourceCollection($request, $media)->response();
+        }
+
+        return $this->views->render('media.index', [
+            'media_items' => $this->views->isInertia() ? $this->resourceCollection($request, $media) : $media,
+            'filters' => $filters,
+            ...$this->pageData($request),
+            'title' => $filters['search']
+                ? __('Media matching ":search"', ['search' => $filters['search']])
+                : __('Media library'),
+        ]);
+    }
+
+    public function create(Request $request): View|Responsable
+    {
+        $this->authorizeAbility($request, 'create', Mediapicker::mediaModel());
+
+        return $this->views->render('media.create', [
+            ...$this->pageData($request),
+            'title' => __('Upload media'),
+        ]);
+    }
+
+    public function store(StoreMediaRequest $request): JsonResponse|RedirectResponse
+    {
+        $this->authorizeAbility($request, 'create', Mediapicker::mediaModel());
+
+        /** @var MediaOwner $user */
+        $user = $request->user();
+
+        $media = $this->addToLibrary($user, $request->file('file'), $request);
+
+        if ($request->expectsJson()) {
+            return $this->resource($request, $media)->response()->setStatusCode(201);
+        }
+
+        return redirect()
+            ->to($this->url($request, 'edit', $media))
+            ->with('success', __('The file was uploaded.'));
+    }
+
+    public function show(Request $request, string $media): View|Responsable|JsonResponse
+    {
+        $media = $this->findMedia($request, $media);
+
+        $this->authorizeAbility($request, 'view', $media);
+
+        if ($request->expectsJson()) {
+            return $this->resource($request, $media)->response();
+        }
+
+        return $this->views->render('media.show', [
+            'media' => $this->views->isInertia() ? $this->resource($request, $media)->resolve($request) : $media,
+            ...$this->pageData($request, $media),
+            'title' => $media->name,
+        ]);
+    }
+
+    public function edit(Request $request, string $media): View|Responsable
+    {
+        $media = $this->findMedia($request, $media);
+
+        $this->authorizeAbility($request, 'update', $media);
+
+        return $this->views->render('media.edit', [
+            'media' => $this->views->isInertia() ? $this->resource($request, $media)->resolve($request) : $media,
+            'form' => $this->detailsForm($request, $media),
+            ...$this->pageData($request, $media),
+            'title' => __('Edit :name', ['name' => $media->name]),
+        ]);
+    }
+
+    public function update(UpdateMediaRequest $request, string $media): JsonResponse|RedirectResponse
+    {
+        $media = $this->findMedia($request, $media);
+
+        $this->authorizeAbility($request, 'update', $media);
+
+        $media->fill($request->validated());
+        $media->save();
+
+        if ($request->expectsJson()) {
+            return $this->resource($request, $media->refresh())->response();
+        }
+
+        return redirect()
+            ->to($this->url($request, 'edit', $media))
+            ->with('success', __('The details were saved.'));
+    }
+
+    public function destroy(Request $request, string $media): JsonResponse|RedirectResponse
+    {
+        $media = $this->findMedia($request, $media);
+
+        $this->authorizeAbility($request, 'delete', $media);
+
+        $media->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(null, 204);
+        }
+
+        return redirect()
+            ->to($this->url($request, 'index'))
+            ->with('success', __('The file was deleted.'));
     }
 
     /**
-     * @return Media
+     * Save the crop of an image for a preset, and regenerate the conversions that use it
      */
-    protected function resolveMedia(string|int $media_id)
+    public function crop(Request $request, string $media, string $preset): JsonResponse|RedirectResponse
     {
-        $model_class = Mediapicker::mediaModel();
+        $media = $this->findMedia($request, $media);
 
-        $media = $model_class::findForController($media_id)->firstOrFail();
+        $this->authorizeAbility($request, 'update', $media);
+
+        abort_unless(CropPresets::exists($preset), 404);
+        abort_unless($media->isImage(), 422, __('Only images can be cropped.'));
+
+        $crop = $request->validate(CropPresets::cropRules());
+
+        app(Cropper::class)->crop($media, $preset, $crop);
+
+        if ($request->expectsJson()) {
+            return $this->resource($request, $media->refresh())->response();
+        }
+
+        return redirect()
+            ->to($this->url($request, 'edit', $media))
+            ->with('success', __('The crop was saved.'));
+    }
+
+    /**
+     * The form for a media's details, defined once with javaabu/stencil
+     */
+    protected function detailsForm(Request $request, Media $media): MediaDetailsForm
+    {
+        return MediaDetailsForm::make()
+            ->model($media)
+            ->action($this->url($request, 'update', $media))
+            ->method('PATCH');
+    }
+
+    /**
+     * Bulk actions on the library: `action=delete` with `media[]`
+     */
+    public function bulk(Request $request): JsonResponse|RedirectResponse
+    {
+        $this->authorizeAbility($request, 'viewAny', Mediapicker::mediaModel());
+
+        $validated = $request->validate([
+            'action' => ['required', Rule::in(['delete'])],
+            'media' => ['required', 'array', 'max:500'],
+            'media.*' => ['integer'],
+        ]);
+
+        $media_items = $this->query($request)
+            ->whereKey($validated['media'])
+            ->get();
+
+        abort_if($media_items->count() !== count(array_unique($validated['media'])), 422, __('Some of the selected files can\'t be found.'));
+
+        $media_items->each(fn (Media $media) => $this->authorizeAbility($request, 'delete', $media));
+
+        $media_items->each(fn (Media $media) => $media->delete());
+
+        if ($request->expectsJson()) {
+            return response()->json(['deleted' => $media_items->modelKeys()]);
+        }
+
+        return redirect()
+            ->to($this->url($request, 'index', parameters: Arr::only($request->query(), ['view'])))
+            ->with('success', trans_choice('{1} :count file was deleted.|[2,*] :count files were deleted.', $media_items->count()));
+    }
+
+    /**
+     * Add an uploaded file to the user's library, with its details, size and crops
+     */
+    protected function addToLibrary(MediaOwner $user, UploadedFile $file, StoreMediaRequest $request): Media
+    {
+        $adder = $user->addMedia($file);
+
+        $name = $request->input('name') ?: pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+
+        $adder->usingName(Str::limit($name, 255, ''));
+
+        $custom_properties = array_filter(
+            Arr::only($request->validated(), ['description', 'alt', 'caption']),
+            fn ($value) => filled($value),
+        );
+
+        if (FileTypes::typeOf($file->getMimeType()) === 'image') {
+            $custom_properties = [...$custom_properties, ...$this->dimensions($file)];
+        }
+
+        if ($crops = $request->validated('crops')) {
+            $custom_properties['crops'] = array_map(fn (array $crop) => CropPresets::normalize($crop), $crops);
+        }
+
+        if ($custom_properties) {
+            $adder->withCustomProperties($custom_properties);
+        }
+
+        /** @var Media $media */
+        $media = $adder->toMediaCollection($user->getMediapickerCollectionName());
+
+        $media_class = Mediapicker::mediaModel();
+
+        if (Translations::supports($media_class)) {
+            // spatie created it as its own media model; translate through ours
+            $media = $media_class::query()->findOrFail($media->getKey());
+            $media->fill(Arr::except($request->validated(), ['file', 'type', 'crops']));
+            $media->save();
+        }
 
         return $media;
     }
 
     /**
-     * Display a listing of the resource.
+     * @return array{width?: int, height?: int}
      */
-    public function index(Request $request)
+    protected function dimensions(UploadedFile $file): array
     {
-        $this->authorize('viewAny', Mediapicker::mediaModel());
+        try {
+            $image = Image::load($file->getRealPath());
 
-        $title = __('All Media');
-        $orderby = $this->getOrderBy($request, 'created_at');
-        $order = $this->getOrder($request, 'created_at', $orderby);
-        $per_page = $this->getPerPage($request, 24);
+            return ['width' => $image->getWidth(), 'height' => $image->getHeight()];
+        } catch (Throwable $exception) {
+            report($exception);
 
-        $view = $request->input('view', 'grid');
+            return [];
+        }
+    }
 
+    /**
+     * The library media the user may see, filtered
+     *
+     * @param  array<string, mixed>|null  $filters
+     */
+    protected function query(Request $request, ?array $filters = null): Builder
+    {
         $media_class = Mediapicker::mediaModel();
 
-        $media_items = $media_class::userVisible()
-                            ->orderBy($orderby, $order);
+        $query = $media_class::query()->visibleTo($request->user());
 
-        $mode = $request->input('mode', 'index');
-        $single = $request->input('single') == true;
-
-        $search = null;
-        if ($search = $request->input('search')) {
-            $media_items->search($search);
-            $title = __('Media matching \':search\'', ['search' => $search]);
+        if ($filters === null) {
+            return $query;
         }
 
-        $type = $request->input('type');
+        $query->search($filters['search']);
 
-        if ($type) {
-            $media_items->hasFileType($type);
+        if ($filters['type']) {
+            $query->hasFileType($filters['type']);
         }
 
-        if ($date_field = $request->input('date_field')) {
-            $media_items->dateBetween($date_field, $request->input('date_from'), $request->input('date_to'));
+        if ($filters['owner'] === 'mine' && $request->user()) {
+            $query->ownedBy($request->user());
         }
 
-        $media_items = $media_items->with('model')
-                                   ->paginate($per_page)
-                                   ->appends($request->except('page'));
-
-        $selected = $request->input('selected', []);
-        $selected = Arr::wrap($selected);
-
-        if ($single && $selected) {
-            $selected = [$selected[0]];
+        if ($filters['date_from']) {
+            $query->where('created_at', '>=', $filters['date_from'] . ' 00:00:00');
         }
 
-        $view_name = $mode == 'picker' ? 'media.picker.show' : 'media.index';
+        if ($filters['date_to']) {
+            $query->where('created_at', '<=', $filters['date_to'] . ' 23:59:59');
+        }
 
-        return view(Mediapicker::getViewName($view_name), compact(
-            'media_items',
-            'single',
-            'selected',
-            'type',
-            'mode',
-            'title',
-            'per_page',
-            'search',
-            'view'
+        return $query->orderBy($filters['orderby'], $filters['order'])
+            ->orderBy('id', $filters['order']);
+    }
+
+    /**
+     * The filters of the library from the query string
+     *
+     * @return array{
+     *     search: ?string,
+     *     type: array<int, string>,
+     *     owner: ?string,
+     *     date_from: ?string,
+     *     date_to: ?string,
+     *     orderby: string,
+     *     order: string,
+     *     per_page: int,
+     *     view: string
+     * }
+     */
+    protected function filters(Request $request): array
+    {
+        $types = array_values(array_filter(
+            Arr::wrap($request->query('type')),
+            fn ($type) => is_string($type) && FileTypes::exists($type),
         ));
+
+        $date = fn (string $key) => is_string($request->query($key)) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $request->query($key))
+            ? $request->query($key)
+            : null;
+
+        [$sort_by, $sort_order] = array_pad(explode(':', (string) $request->query('sort', '')), 2, null);
+
+        $orderby = $request->query('orderby', $sort_by);
+        $orderby = in_array($orderby, self::ORDERBYS, true) ? $orderby : 'created_at';
+        $order = $request->query('order', $sort_order);
+
+        return [
+            'search' => is_string($request->query('search')) ? trim($request->query('search')) : null,
+            'type' => $types,
+            'owner' => $request->query('owner') === 'mine' ? 'mine' : null,
+            'date_from' => $date('date_from'),
+            'date_to' => $date('date_to'),
+            'orderby' => $orderby,
+            'order' => $order === 'asc' ? 'asc' : 'desc',
+            'per_page' => min(max($request->integer('per_page', config('mediapicker.per_page', 24)), 1), 100),
+            'view' => $request->query('view') === 'list' ? 'list' : 'grid',
+        ];
     }
 
     /**
-     * Store a newly created resource in storage.
+     * What every page gets: permissions, URLs, file types, crop presets and strings
+     *
+     * @return array<string, mixed>
      */
-    public function store(MediaRequest $request)
+    protected function pageData(Request $request, ?Media $media = null): array
     {
-        $this->authorize('create', Mediapicker::mediaModel());
-
-        /** @var MediaOwner $user */
+        $media_class = Mediapicker::mediaModel();
         $user = $request->user();
 
-        $file = $request->file('file');
-
-        $media = $user->addMedia($file);
-
-        if ($name = $request->input('name')) {
-            $media->usingName($name);
-        }
-
-        $custom_properties = [];
-
-        if ($description = $request->input('description')) {
-            $custom_properties['description'] = $description;
-        }
-
-        // get dimensions
-        try {
-            $image = Image::load($file);
-
-            $custom_properties['width'] =  $image->getWidth();
-            $custom_properties['height'] =  $image->getHeight();
-        } catch (\Exception $e) {
-            Log::error('MediapickerError: Could not load image dimensions. Error: ' . $e->getMessage());
-        }
-
-        if ($custom_properties) {
-            $media->withCustomProperties($custom_properties);
-        }
-
-        $media = $media->toMediaCollection($user->getMediapickerCollectionName());
-
-        $edit_url = Mediapicker::newMediaInstance()->url('edit', $media);
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success'   => true,
-                'id'        => $media->id,
-                'uuid'      => $media->uuid,
-                'thumb'     => $media->getUrl('mediapicker-thumb'),
-                'large'     => $media->getUrl('mediapicker-large'),
-                'file_type' => AllowedMimeTypes::getType($media->mime_type),
-                'icon'      => AllowedMimeTypes::getIcon($media->mime_type, Mediapicker::getIconPack()),
-                'name'      => $media->name,
-                'file_name' => $media->file_name,
-                'url'       => $media->getUrl(),
-                'edit_url'  => $edit_url,
-            ]);
-        }
-
-        $this->flashSuccessMessage();
-
-        return redirect()->to($edit_url);
+        return [
+            'can' => [
+                'create' => (bool) $user?->can('create', $media_class),
+                'view_others' => (bool) $user?->can('viewOthers', $media_class),
+                'update' => $media ? (bool) $user?->can('update', $media) : null,
+                'delete' => $media ? (bool) $user?->can('delete', $media) : null,
+            ],
+            'urls' => $this->urls($request, $media),
+            'file_types' => $this->fileTypeOptions(),
+            'upload' => [
+                'accept' => implode(',', FileTypes::mimeTypes()),
+                'max_size' => FileTypes::maxSize(),
+            ],
+            'crop_presets' => CropPresets::forUi(),
+            'translatable' => Translations::enabled(),
+            'strings' => $this->views->isInertia() ? Strings::all() : null,
+        ];
     }
 
     /**
-     * Show the form for creating a new resource.
+     * @return array<int, array{value: string, label: string, icon: string}>
      */
-    public function create()
+    protected function fileTypeOptions(): array
     {
-        $this->authorize('create', Mediapicker::mediaModel());
-
-        return view(Mediapicker::getViewName('media.create'));
-    }
-
-
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string|int $media_id)
-    {
-        $media = $this->resolveMedia($media_id);
-
-        $this->authorize('view', $media);
-
-        return view(Mediapicker::getViewName('media.show'), compact('media'));
+        return array_map(fn (string $type) => [
+            'value' => $type,
+            'label' => __(Str::headline($type)),
+            'icon' => FileTypes::all()[$type]['icon'] ?? 'file',
+        ], FileTypes::types());
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * @return array<string, string>
      */
-    public function edit(string|int $media_id)
+    protected function urls(Request $request, ?Media $media = null): array
     {
-        $media = $this->resolveMedia($media_id);
-
-        $this->authorize('update', $media);
-
-        return view(Mediapicker::getViewName('media.edit'), compact('media'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(MediaRequest $request, string|int $media_id)
-    {
-        $media = $this->resolveMedia($media_id);
-
-        $this->authorize('update', $media);
-
-        $media->fill($request->only(['name', 'description']));
-        $media->save();
-
-        if ($request->expectsJson()) {
-            return response()->json($media);
-        }
-
-        $this->flashSuccessMessage();
-
-        return redirect()->to($media->url('edit'));
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string|int $media_id, Request $request)
-    {
-        $media = $this->resolveMedia($media_id);
-
-        $this->authorize('delete', $media);
-
-        $media->delete();
-
-        if ($request->expectsJson()) {
-            return response()->json(true);
-        }
-
-        return redirect()->to($media->url('index'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function bulk(Request $request)
-    {
-        $this->authorize('create', Mediapicker::mediaModel());
-
-        /** @var MediaOwner $user */
-        $user = $request->user();
-
-        $rules = [
-            'action'  => 'required|in:delete',
-            'media'   => 'required|array',
-            'media.*' => 'exists:media,id,collection_name,'.$user->getMediapickerCollectionName().',model_type,' . $user->getMorphClass(),
+        $urls = [
+            'index' => $this->url($request, 'index'),
+            'create' => $this->url($request, 'create'),
+            'store' => $this->url($request, 'store'),
+            'bulk' => $this->url($request, 'bulk'),
         ];
 
-        if (! $user->canDeleteOthersMedia()) {
-            $rules['media.*'] .= ',model_id,' . $user->getKey();
+        if ($media) {
+            $urls = [
+                ...$urls,
+                'show' => $this->url($request, 'show', $media),
+                'edit' => $this->url($request, 'edit', $media),
+                'update' => $this->url($request, 'update', $media),
+                'destroy' => $this->url($request, 'destroy', $media),
+                'crop' => str_replace('__preset__', '{preset}', $this->url($request, 'crop', $media, ['preset' => '__preset__'])),
+            ];
         }
 
-        $this->validate($request, $rules);
+        return $urls;
+    }
 
-        $action = $request->input('action');
-        $ids = $request->input('media', []);
-        $view = $request->input('view');
+    /**
+     * @param  array<string, mixed>  $parameters
+     */
+    protected function url(Request $request, string $action, ?Media $media = null, array $parameters = []): string
+    {
+        return Mediapicker::url($action, $media, $parameters, MediapickerRoutes::currentName($request));
+    }
 
-        switch ($action) {
-            case 'delete':
-                $media_model = Mediapicker::mediaModel();
+    protected function findMedia(Request $request, string $id): Media
+    {
+        $media_class = Mediapicker::mediaModel();
 
-                $media = $media_model::whereIn('id', $ids)
-                            ->where('collection_name', $user->getMediapickerCollectionName())
-                            ->whereModelType($user->getMorphClass());
+        /** @var Media $media */
+        $media = $media_class::query()
+            ->inLibraryOf($request->user())
+            ->whereKey($id)
+            ->firstOrFail();
 
-                $media->get()
-                      ->each(function ($media) {
-                          $this->authorize('delete', $media);
-                          $media->delete();
-                      });
-                break;
-        }
+        return $media;
+    }
 
-        $this->flashSuccessMessage();
+    protected function resource(Request $request, Media $media): MediaResource
+    {
+        return (new MediaResource($media))->forLibrary(MediapickerRoutes::currentName($request));
+    }
 
-        $redirect = add_query_arg('view', $view, Mediapicker::newMediaInstance()->url('index'));
+    protected function resourceCollection(Request $request, LengthAwarePaginator $media): AnonymousResourceCollection
+    {
+        $route_name = MediapickerRoutes::currentName($request);
 
-        return $this->redirect($request, $redirect);
+        $collection = MediaResource::collection($media);
+
+        $collection->collection->each(fn (MediaResource $resource) => $resource->forLibrary($route_name));
+
+        return $collection;
+    }
+
+    /**
+     * Authorize against the user of the guard the routes were registered for
+     */
+    protected function authorizeAbility(Request $request, string $ability, mixed $arguments): void
+    {
+        $user = $request->user(MediapickerRoutes::guard($request));
+
+        Gate::forUser($user)->authorize($ability, $arguments);
     }
 }

@@ -56,7 +56,7 @@ class AttachmentsRegenerateCommand extends Command
                     $attachment,
                     Arr::wrap($this->option('only')),
                     $this->option('only-missing'),
-                    false,//$this->option('with-responsive-images'),
+                    false,// $this->option('with-responsive-images'),
                     $this->option('queue-all'),
                 );
             } catch (Exception $exception) {

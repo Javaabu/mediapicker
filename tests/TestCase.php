@@ -4,12 +4,17 @@ namespace Javaabu\Mediapicker\Tests;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
+use Inertia\ServiceProvider as InertiaServiceProvider;
+use Javaabu\BlockEditor\BlockEditorServiceProvider;
 use Javaabu\Forms\FormsServiceProvider;
-use Javaabu\Helpers\HelpersServiceProvider;
+use Javaabu\Manifest\ManifestServiceProvider;
+use Javaabu\Mediapicker\MediapickerServiceProvider;
 use Javaabu\Mediapicker\Models\Attachment;
+use Javaabu\Mediapicker\Models\Media;
+use Javaabu\Mediapicker\Routing\MediapickerRoutes;
+use Javaabu\Mediapicker\Tests\TestSupport\Models\Admin;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithConversions;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithMultipleConversions;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithSameConversions;
@@ -18,69 +23,96 @@ use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithUnacceptedFile;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\ModelWithUnacceptedMimeType;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\Post;
 use Javaabu\Mediapicker\Tests\TestSupport\Models\User;
-use Javaabu\Settings\SettingsServiceProvider;
-use Orchestra\Testbench\TestCase as BaseTestCase;
-use Javaabu\Mediapicker\MediapickerServiceProvider;
 use Javaabu\Mediapicker\Tests\TestSupport\Providers\TestServiceProvider;
-use Javaabu\Activitylog\ActivitylogServiceProvider;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Javaabu\Permissions\Models\Permission;
+use Javaabu\Permissions\Models\Role;
+use Javaabu\Permissions\PermissionsServiceProvider;
+use Javaabu\Stencil\StencilServiceProvider;
+use Orchestra\Testbench\TestCase as BaseTestCase;
 use Spatie\MediaLibrary\MediaLibraryServiceProvider;
+use Spatie\Permission\PermissionServiceProvider;
 
 abstract class TestCase extends BaseTestCase
 {
-
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
-        $this->app['config']->set('app.key', 'base64:yWa/ByhLC/GUvfToOuaPD7zDwB64qkc/QkaQOrT5IpE=');
-
-        $this->app['config']->set('session.serialization', 'php');
-
-        $this->app['config']->set('defaults.max_image_file_size', 1024 * 2);
-
         View::addLocation(__DIR__ . '/TestSupport/views');
 
+        $this->withoutVite();
+
         $this->setUpTempTestFiles();
-
-        if (empty(glob($this->app->databasePath('migrations/*_create_media_table.php')))) {
-            Artisan::call('vendor:publish', [
-                '--provider' => 'Spatie\\MediaLibrary\\MediaLibraryServiceProvider',
-                '--tag' => 'medialibrary-migrations',
-            ]);
-
-            Artisan::call('migrate');
-        }
-
     }
 
-    protected function getPackageProviders($app)
+    protected function tearDown(): void
+    {
+        MediapickerRoutes::forgetRegistered();
+
+        parent::tearDown();
+    }
+
+    protected function getPackageProviders($app): array
     {
         return [
-            MediapickerServiceProvider::class,
-            MediaLibraryServiceProvider::class,
-            TestServiceProvider::class,
-            HelpersServiceProvider::class,
-            SettingsServiceProvider::class,
+            PermissionServiceProvider::class,
+            PermissionsServiceProvider::class,
+            ManifestServiceProvider::class,
             FormsServiceProvider::class,
-            ActivitylogServiceProvider::class,
+            StencilServiceProvider::class,
+            BlockEditorServiceProvider::class,
+            MediaLibraryServiceProvider::class,
+            InertiaServiceProvider::class,
+            MediapickerServiceProvider::class,
+            TestServiceProvider::class,
         ];
     }
 
-    /**
-     * @param  \Illuminate\Foundation\Application  $app
-     */
-    public function getEnvironmentSetUp($app)
+    protected function defineEnvironment($app): void
     {
         $this->initializeDirectory($this->getTempDirectory());
 
-        config()->set('filesystems.disks.public', [
+        $config = $app['config'];
+
+        $config->set('app.key', 'base64:yWa/ByhLC/GUvfToOuaPD7zDwB64qkc/QkaQOrT5IpE=');
+        $config->set('session.serialization', 'php');
+        $config->set('media-library.media_model', Media::class);
+        $config->set('media-library.queue_conversions_by_default', false);
+        $config->set('permission.models.permission', Permission::class);
+        $config->set('permission.models.role', Role::class);
+        $config->set('permissions.guards', ['web', 'web_admin']);
+        $config->set('mediapicker.layout', 'layouts.app');
+        $config->set('inertia.testing.ensure_pages_exist', false);
+
+        $config->set('auth.guards', [
+            'web' => [
+                'driver' => 'session',
+                'provider' => 'users',
+            ],
+            'web_admin' => [
+                'driver' => 'session',
+                'provider' => 'admins',
+            ],
+        ]);
+
+        $config->set('auth.providers', [
+            'users' => [
+                'driver' => 'eloquent',
+                'model' => User::class,
+            ],
+            'admins' => [
+                'driver' => 'eloquent',
+                'model' => Admin::class,
+            ],
+        ]);
+
+        $config->set('filesystems.disks.public', [
             'driver' => 'local',
             'root' => $this->getMediaDirectory(),
             'url' => '/media',
         ]);
 
-        config()->set('filesystems.disks.secondMediaDisk', [
+        $config->set('filesystems.disks.secondMediaDisk', [
             'driver' => 'local',
             'root' => $this->getTempDirectory('media2'),
             'url' => '/media2',
@@ -93,7 +125,7 @@ abstract class TestCase extends BaseTestCase
 
     protected function getImageDimensions(string $path): array
     {
-        list($width, $height, $type, $attr) = getimagesize($path);
+        [$width, $height, $type, $attr] = getimagesize($path);
 
         return compact('width', 'height');
     }
@@ -172,7 +204,7 @@ abstract class TestCase extends BaseTestCase
             $model = $this->getModel();
         }
 
-        $attachment = new Attachment();
+        $attachment = new Attachment;
         $attachment->collection_name = $collection_name;
         $attachment->media()->associate($media);
         $attachment->model()->associate($model);
@@ -184,7 +216,7 @@ abstract class TestCase extends BaseTestCase
     protected function setUpTempTestFiles()
     {
         $this->initializeDirectory($this->getTestFilesDirectory());
-        File::copyDirectory(__DIR__.'/TestSupport/testfiles', $this->getTestFilesDirectory());
+        File::copyDirectory(__DIR__ . '/TestSupport/testfiles', $this->getTestFilesDirectory());
     }
 
     protected function initializeDirectory($directory)
@@ -202,22 +234,22 @@ abstract class TestCase extends BaseTestCase
             $suffix = "/{$suffix}";
         }
 
-        return __DIR__.$suffix;
+        return __DIR__ . $suffix;
     }
 
     public function getTempDirectory(string $suffix = ''): string
     {
-        return __DIR__.'/TestSupport/temp'.($suffix == '' ? '' : '/'.$suffix);
+        return __DIR__ . '/TestSupport/temp' . ($suffix == '' ? '' : '/' . $suffix);
     }
 
     public function getMediaDirectory(string $suffix = ''): string
     {
-        return $this->getTempDirectory().'/media'.($suffix == '' ? '' : DIRECTORY_SEPARATOR .$suffix);
+        return $this->getTempDirectory() . '/media' . ($suffix == '' ? '' : DIRECTORY_SEPARATOR . $suffix);
     }
 
     public function getTestFilesDirectory(string $suffix = ''): string
     {
-        return $this->getTempDirectory().'/testfiles'.($suffix == '' ? '' : '/'.$suffix);
+        return $this->getTempDirectory() . '/testfiles' . ($suffix == '' ? '' : '/' . $suffix);
     }
 
     public function getTestJpg(): string

@@ -2,17 +2,36 @@
 
 namespace Javaabu\Mediapicker;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use InvalidArgumentException;
 use Javaabu\Mediapicker\Contracts\Attachment;
 use Javaabu\Mediapicker\Http\Controllers\MediaController;
 use Javaabu\Mediapicker\Models\Media;
+use Javaabu\Mediapicker\Models\Translatable\Media as TranslatableMedia;
+use Javaabu\Mediapicker\Routing\MediapickerRoutes;
+use Javaabu\Mediapicker\Support\ImageData;
+use Javaabu\Mediapicker\Support\PickerConfig;
+use Javaabu\Mediapicker\Support\Translations;
+use Spatie\MediaLibrary\MediaCollections\Models\Media as BaseMedia;
 
 class Mediapicker
 {
+    /** Whether the package loads its migrations. Turn off with `Mediapicker::ignoreMigrations()`. */
+    public static bool $runs_migrations = true;
 
+    public static function ignoreMigrations(): void
+    {
+        static::$runs_migrations = false;
+    }
+
+    /**
+     * The collection on owners that holds their library uploads
+     */
     public static function collectionName(): string
     {
-        return config('mediapicker.collection_name');
+        return config('mediapicker.collection_name', 'mediapicker');
     }
 
     /**
@@ -28,7 +47,7 @@ class Mediapicker
      */
     public static function mediaController(): string
     {
-        return config('mediapicker.media_controller');
+        return config('mediapicker.media_controller', MediaController::class);
     }
 
     /**
@@ -36,7 +55,11 @@ class Mediapicker
      */
     public static function mediaModel(): string
     {
-        return config('mediapicker.media_model');
+        if ($model = config('mediapicker.media_model')) {
+            return $model;
+        }
+
+        return Translations::enabled() ? TranslatableMedia::class : Media::class;
     }
 
     public static function newMediaInstance(): Media
@@ -46,62 +69,68 @@ class Mediapicker
         return new $media_class;
     }
 
-    public static function getViewName(string $view, string $framework = ''): string
+    /**
+     * The route name prefix of the library to link to: the library of the current request,
+     * else the one registered for a guard the visitor is signed in with, else the default one
+     */
+    public static function routeName(?string $guard = null): string
     {
-        if (! $framework) {
-            $framework = config('mediapicker.framework');
+        if ($guard) {
+            return MediapickerRoutes::nameFor($guard) ?? 'media';
         }
 
-        return 'mediapicker::' . $framework . '.' . $view;
-    }
-
-    public static function getIconPack(string $framework = ''): string
-    {
-        if (! $framework) {
-            $framework = config('mediapicker.framework');
+        if ($current = MediapickerRoutes::currentName(request())) {
+            return $current;
         }
 
-        return $framework == 'material-admin' ? 'material' : 'fontawesome';
+        foreach (MediapickerRoutes::registered() as $registered_guard => $name) {
+            if ($registered_guard !== '*' && Auth::guard($registered_guard)->check()) {
+                return $name;
+            }
+        }
+
+        return MediapickerRoutes::nameFor() ?? 'media';
     }
 
     /**
-     * Register the admin routes
+     * A URL of the library: `index`, `create`, `store`, `bulk`, or `show`, `edit`, `update`,
+     * `destroy` and `crop` with a media
+     *
+     * @param  array<string, mixed>  $parameters
      */
-    public static function registerRoutes(
-        string $url = 'media',
-        array|string  $middleware = [],
-        array $resource_options = [],
-        array $resource_names = [
-            'index' =>	'media.index',
-            'create' => 'media.create',
-            'store' => 'media.store',
-            'show' => 'media.show',
-            'edit' => 'media.edit',
-            'update' => 'media.update',
-            'destroy' => 'media.destroy',
-        ],
-        string $bulk_name = 'media.bulk',
-        string $picker_name = 'media.picker',
-    )
+    public static function url(string $action, ?BaseMedia $media = null, array $parameters = [], ?string $route_name = null): string
     {
-        $controller = static::mediaController();
+        $name = ($route_name ?: static::routeName()) . ".{$action}";
 
-        Route::match(['PUT', 'PATCH'], $url, [$controller, 'bulk'])
-            ->name($bulk_name)
-            ->middleware($middleware);
+        if (! Route::has($name)) {
+            throw new InvalidArgumentException("The route [{$name}] isn't registered. Add Route::mediapicker() to your routes.");
+        }
 
-        /*Route::get($url . '/picker', [$controller, 'picker'])
-            ->name($picker_name)
-            ->middleware($middleware);*/
+        if ($media && in_array($action, ['show', 'edit', 'update', 'destroy', 'crop'], true)) {
+            $parameters = ['media' => $media->getKey(), ...$parameters];
+        }
 
-        $resource_options = array_merge([
-            'parameters' => [
-                $url => 'media',
-            ]
-        ], $resource_options);
+        return route($name, $parameters);
+    }
 
-        Route::resource('media', $controller, $resource_options)
-            ->middleware($middleware)
-            ->names($resource_names);
+    /**
+     * What React pickers need (library URL, file types, limits, crop presets, strings).
+     * Share it with Inertia: `'mediapicker' => fn () => Mediapicker::pickerConfig()`.
+     *
+     * @return array<string, mixed>
+     */
+    public static function pickerConfig(?string $route_name = null): array
+    {
+        return PickerConfig::make($route_name);
+    }
+
+    /**
+     * An attached image as data for React's `<Picture>`
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function image(Model|Attachment|null $subject, string $collection = 'default', string $conversion = '', ?string $sizes = null): ?array
+    {
+        return ImageData::for($subject, $collection, $conversion, $sizes);
     }
 }

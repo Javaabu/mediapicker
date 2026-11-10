@@ -1,0 +1,46 @@
+# javaabu/mediapicker
+
+> A media library for Laravel on spatie/laravel-medialibrary v11. Users upload to their own library (any guard; one library per kind of user), and models attach library media to their own collections through the attachments table without copying files. Models declare attachment conversions that are queued, made only for the collections that need them, fingerprinted (shared between models, never made twice, WebP/AVIF copies, responsive widths) and rendered with <x-mediapicker::image> or React <Picture>. Images are cropped non-destructively to aspect-ratio presets that drive conversions. Route::mediapicker() adds library pages in Blade (javaabu/forms v2) or Inertia React and a JSON API; <x-mediapicker::picker>, React MediaPickerField and the stencil MediaPickerField pick media; javaabu/block-editor gets image, gallery, file and video blocks; permissions and policy come through javaabu/permissions.
+
+Paths are relative to this file. In a project, that's vendor/javaabu/mediapicker/.
+
+## Rules
+
+- Users who upload implement `Javaabu\Mediapicker\Contracts\MediaOwner` with the `OwnsMedia` trait and spatie's `InteractsWithMedia`, calling `registerMediapickerCollections()` and `registerMediapickerConversions()` from spatie's hooks. Models that use media implement `Contracts\HasAttachments` with `Concerns\InteractsWithAttachments`. Don't `addMedia()` to a post: attach library media.
+- Set spatie's `media-library.media_model` to `Javaabu\Mediapicker\Models\Media` (or `Models\Translatable\Media` with javaabu/translatable).
+- Register the library yourself with `Route::mediapicker([...])` inside the app's route group; pass `guard`, `prefix` and `name` for an admin guard. It isn't loaded automatically. Link to it with `Mediapicker::url('edit', $media)` or `$media->libraryUrl('edit')`, never hard-coded paths.
+- Every picked id must be validated with `new Javaabu\Mediapicker\Rules\LibraryMedia(type: 'image')` (`'gallery.*'` for several): it only accepts media the user may see. Save with `$model->syncAttachmentsFromRequest('gallery')` or `updateAttachmentMedia($ids, 'gallery')`, which keep the order and clear on empty.
+- Picker fields: `<x-mediapicker::picker name="gallery" :model="$post" type="image" multiple />` in Blade; `MediaPickerField` (from `@javaabu/mediapicker`, bound by hand with `value`/`onChange`) in React inside `MediapickerProvider config={Mediapicker::pickerConfig()}`; `Javaabu\Mediapicker\Stencil\MediaPickerField::make('gallery')->mediaType('image')->multiple()` in stencil forms (register `StencilMediaPicker` as the `mediapicker` type in React). The class is `MediaPickerField`: `MediaPicker` would clash with `Mediapicker` (PHP class names ignore case).
+- Declare conversions in `registerAttachmentConversions()` with `$this->addAttachmentConversion('card')`, with `->performOnCollections()`, and `->usingCrop('wide')`, `->formats(['avif', 'webp'])`, `->withResponsiveImages()` where they help. They're queued unless `nonQueued()`. Render with `<x-mediapicker::image :model="$post" collection="featured_image" conversion="card" />` or `Mediapicker::image()` + `<Picture>`; in code use `$attachment->getAvailableUrl('card')`, which falls back to the original until a queued conversion is made.
+- Never edit or overwrite the original file to crop: save a crop with `app(Cropper::class)->crop($media, 'wide', [...])` or `PUT media/{id}/crops/{preset}`; conversions that use the preset are made again. Presets are in `mediapicker.crop_presets`.
+- After changing a conversion run `php artisan mediapicker:regenerate --only-missing`, then `mediapicker:clean` (schedule it) to remove files nothing uses.
+- Permissions are `view_media`, `view_others_media`, `edit_media`, `edit_others_media`, `delete_media`, `delete_others_media`; run `php artisan permissions:sync`. List what a user may see with `Media::visibleTo($user)`. Override the policy with `config('permissions.policies')`, `Gate::policy()` or `mediapicker.policy`, and the controller with `mediapicker.media_controller`, never by editing the package.
+- File types come from `mediapicker.file_types` (`image`, `video`, `audio`, `document`, `archive`); use `Support\FileTypes`, not javaabu/helpers' `AllowedMimeTypes`.
+- javaabu/translatable is optional: only reference its classes behind `Support\Translations::supports()`.
+- Every user-facing string goes through `__()` with Dhivehi in `lang/dv.json`; use logical CSS (`ms-`, `pe-`, `inset-inline-start`) and Thaana in tests of user-facing behaviour.
+
+## Docs
+
+- [Introduction](docs/intro.md): what the package does
+- [Requirements](docs/requirements.md): PHP, Laravel, dependencies and optional packages
+- [Installation & Setup](docs/installation-and-setup.md): installing, migrating, the media model, owners, attaching models, permissions, routes, views, queue, publishing
+- [Upgrading](docs/upgrading.md): from the unreleased version on main
+- [The media library](docs/basic-usage/media-library.md): libraries and owners, pages and routes, query string, linking, media details, file types
+- [Picker fields](docs/basic-usage/picker-fields.md): Blade, Inertia React and stencil pickers, validating with LibraryMedia, saving
+- [Attachments](docs/basic-usage/attachments.md): collections, attaching, reading, attachment URLs, commands
+- [Conversions](docs/basic-usage/conversions.md): declaring, how they do less work, showing images in Blade and React, regenerating
+- [Cropping](docs/basic-usage/cropping.md): presets, the cropper, cropping on upload, the Cropper API
+- [Block editor blocks](docs/basic-usage/block-editor.md): image, gallery, file and mediaVideo blocks, what's stored, rendering
+- [Configuration](docs/advanced-usage/configuration.md): every option in config/mediapicker.php
+- [JSON API](docs/advanced-usage/json-api.md): the endpoints, MediaResource, the JavaScript client
+- [Permissions and policies](docs/advanced-usage/permissions-and-policies.md): permissions, MediaPolicy, overriding, several guards
+- [Overriding controllers and views](docs/advanced-usage/overriding-controllers-and-views.md): the controller, Blade views, React pages, styles
+- [Translatable](docs/advanced-usage/translatable.md): optional javaabu/translatable support
+- [Dhivehi and RTL](docs/advanced-usage/dhivehi-and-rtl.md): translations, RTL, Thaana, strings to review
+- [JavaScript](docs/advanced-usage/javascript.md): manifest assets, exports, the framework-free picker, npm packages
+- [API reference](docs/advanced-usage/api-reference.md): every public class and method
+- [AI assistants](docs/ai-assistants.md): Laravel Boost, and using these docs from other assistants
+- [Questions and security](docs/questions-and-security.md)
+- [Changelog](docs/changelog.md)
+- [About us](docs/about-us.md)
+- [Contributing to the docs](docs/contributing-to-docs.md)

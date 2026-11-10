@@ -20,7 +20,7 @@ class PostFactory extends Factory
     }
 
     /**
-     * @param class-string<Model> $model_class
+     * @param  class-string<Model>  $model_class
      */
     public function setModel(string $model_class): self
     {

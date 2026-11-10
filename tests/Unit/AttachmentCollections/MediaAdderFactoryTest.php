@@ -20,7 +20,6 @@ class MediaAdderFactoryTest extends TestCase
         $model = $this->getModel();
         $media = $this->getMedia();
 
-
         $media_adder = MediaAdderFactory::create($model, $media->getKey());
 
         $this->assertInstanceOf(MediaAdder::class, $media_adder);
@@ -31,7 +30,6 @@ class MediaAdderFactoryTest extends TestCase
     {
         $model = $this->getModel();
         $media = $this->getMedia();
-
 
         $media_adder = MediaAdderFactory::create($model, $media);
 
@@ -45,7 +43,6 @@ class MediaAdderFactoryTest extends TestCase
 
         $model = $this->getModel();
         $media = $this->getMedia();
-
 
         Route::post('/add-media', function () {
             $model = Post::first();
@@ -81,7 +78,7 @@ class MediaAdderFactoryTest extends TestCase
             'media' => [
                 $media_1->getKey(),
                 $media_2->getKey(),
-            ]
+            ],
         ])->assertSuccessful();
     }
 }

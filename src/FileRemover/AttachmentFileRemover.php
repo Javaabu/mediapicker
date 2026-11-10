@@ -3,12 +3,12 @@
 namespace Javaabu\Mediapicker\FileRemover;
 
 use Exception;
-use Illuminate\Support\Collection;
 use Javaabu\Mediapicker\Contracts\Attachment;
 use Javaabu\Mediapicker\Mediapicker;
 use Javaabu\Mediapicker\UrlGenerator\AttachmentUrlGeneratorFactory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\MediaLibrary\Support\FileRemover\DefaultFileRemover;
+use Spatie\MediaLibrary\Support\PathGenerator\PathGeneratorFactory;
 use Spatie\MediaLibrary\Support\UrlGenerator\UrlGenerator;
 
 class AttachmentFileRemover extends DefaultFileRemover
@@ -25,12 +25,14 @@ class AttachmentFileRemover extends DefaultFileRemover
 
     public function removeFromConversionsDirectory(Media $media, string $disk): void
     {
-        $conversionsDirectory = $this->mediaFileSystem->getMediaDirectory($media, 'conversions');
+        $conversionsDirectory = PathGeneratorFactory::create($media)->getPathForConversions($media);
 
-        $remover = $this;
+        if (! $this->filesystem->disk($disk)->directoryExists($conversionsDirectory)) {
+            return;
+        }
 
         collect([$conversionsDirectory])
-            ->each(function (string $directory) use ($media, $disk, $remover) {
+            ->each(function (string $directory) use ($media, $disk) {
                 try {
                     $allFilePaths = $this->filesystem->disk($disk)->allFiles($directory);
                     $conversionsFilePaths = $this->getAttachmentConversionFilePaths($media) ?: [];
@@ -61,16 +63,16 @@ class AttachmentFileRemover extends DefaultFileRemover
 
     protected function getAttachmentConversionFilePaths(Media $media): array
     {
-       $attachment_class = Mediapicker::attachmentModel();
+        $attachment_class = Mediapicker::attachmentModel();
 
-       $attachments = $attachment_class::where('media_id', $media->getKey())
-           ->distinct('model_type')
-           ->get();
+        $attachments = $attachment_class::where('media_id', $media->getKey())
+            ->distinct('model_type')
+            ->get();
 
         $conversionsFilePaths = [];
         $remover = $this;
 
-       /** @var Attachment $attachment */
+        /** @var Attachment $attachment */
         foreach ($attachments as $attachment) {
             $conversions = array_merge($attachment->getMediaConversionNames());
             $attachment->media = $media;
@@ -81,8 +83,8 @@ class AttachmentFileRemover extends DefaultFileRemover
             );
 
             $conversionsFilePaths = array_merge($conversionsFilePaths, $paths);
-       }
+        }
 
-       return $conversionsFilePaths;
+        return $conversionsFilePaths;
     }
 }

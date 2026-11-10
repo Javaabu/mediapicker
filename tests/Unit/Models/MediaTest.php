@@ -3,7 +3,6 @@
 namespace Javaabu\Mediapicker\Tests\Unit\Models;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Javaabu\Mediapicker\Models\Media;
 use Javaabu\Mediapicker\Tests\TestCase;
@@ -17,7 +16,7 @@ class MediaTest extends TestCase
     #[Test]
     public function it_can_set_media_description(): void
     {
-        $media = new Media();
+        $media = new Media;
         $media->description = 'test description';
 
         $this->assertEquals('test description', $media->description);
@@ -26,7 +25,7 @@ class MediaTest extends TestCase
     #[Test]
     public function it_can_set_the_image_dimensions(): void
     {
-        $media = new Media();
+        $media = new Media;
         $media->width = 200;
         $media->height = 100;
 
@@ -39,7 +38,7 @@ class MediaTest extends TestCase
     {
         $media_1 = $this->getMedia();
 
-        $media = new Media();
+        $media = new Media;
         $media->forceFill($media_1->attributesToArray());
 
         $this->assertEquals('image', $media->file_type);
@@ -50,10 +49,10 @@ class MediaTest extends TestCase
     {
         $media_1 = $this->getMedia();
 
-        $media = new Media();
+        $media = new Media;
         $media->forceFill($media_1->attributesToArray());
 
-        $this->assertEquals('fa-regular fa-file-image', $media->getIcon());
+        $this->assertEquals('image', $media->getIcon());
     }
 
     #[Test]
@@ -62,7 +61,7 @@ class MediaTest extends TestCase
         $media_1 = $this->getMedia($this->getTestJpg());
         $media_2 = $this->getMedia($this->getTestPdf());
 
-        $media = Media::hasFileType('pdf')->get();
+        $media = Media::hasFileType('document')->get();
 
         $this->assertCount(1, $media);
         $this->assertEquals($media_2->id, $media->first()->id);
@@ -85,7 +84,7 @@ class MediaTest extends TestCase
     }
 
     #[Test]
-    public function it_can_filter_user_visible_media(): void
+    public function it_can_filter_the_media_visible_to_a_user(): void
     {
         $user = $this->getUserWithMedia(name: 'Ahmed');
         $media_1 = $user->getFirstMedia('mediapicker');
@@ -101,16 +100,12 @@ class MediaTest extends TestCase
             return $user->name == 'Mohamed';
         });
 
-        Auth::login($user);
-
-        $media = Media::userVisible()->get();
+        $media = Media::visibleTo($user)->get();
 
         $this->assertCount(1, $media);
         $this->assertEquals($media_1->id, $media->first()->id);
 
-        Auth::login($other_user);
-
-        $media = Media::userVisible()->get();
+        $media = Media::visibleTo($other_user)->get();
 
         $this->assertCount(2, $media);
         $this->assertContains($media_1->id, $media->pluck('id')->all());

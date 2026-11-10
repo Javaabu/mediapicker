@@ -1,0 +1,42 @@
+<?php
+
+namespace Javaabu\Mediapicker\Tests\TestSupport\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Javaabu\Mediapicker\Concerns\OwnsMedia;
+use Javaabu\Mediapicker\Contracts\MediaOwner;
+use Javaabu\Mediapicker\Tests\TestSupport\Factories\AdminFactory;
+use Javaabu\Permissions\Traits\HasRoles;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+
+/**
+ * A second kind of user, on the web_admin guard, with its own library
+ */
+class Admin extends Authenticatable implements MediaOwner
+{
+    use HasFactory;
+    use HasRoles;
+    use InteractsWithMedia;
+    use OwnsMedia;
+
+    protected $guarded = [];
+
+    protected string $guard_name = 'web_admin';
+
+    protected static function newFactory(): AdminFactory
+    {
+        return new AdminFactory;
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->registerMediapickerConversions($media);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->registerMediapickerCollections();
+    }
+}

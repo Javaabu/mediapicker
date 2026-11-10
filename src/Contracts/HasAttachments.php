@@ -2,15 +2,15 @@
 
 namespace Javaabu\Mediapicker\Contracts;
 
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use DateTimeInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Javaabu\Mediapicker\AttachmentCollections\Exceptions\AttachmentCannotBeDeleted;
 use Javaabu\Mediapicker\AttachmentCollections\Exceptions\AttachmentCannotBeUpdated;
 use Javaabu\Mediapicker\AttachmentCollections\MediaAdder;
-use Spatie\MediaLibrary\Conversions\Conversion;
+use Javaabu\Mediapicker\Conversions\AttachmentConversion;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 interface HasAttachments
@@ -40,7 +40,7 @@ interface HasAttachments
     /**
      * Add multiple medias from a request by keys.
      *
-     * @param array<string> $keys
+     * @param  array<string>  $keys
      * @return Collection<MediaAdder>
      */
     public function addMultipleAttachmentsFromRequest(array $keys): Collection;
@@ -98,8 +98,6 @@ interface HasAttachments
     /**
      * Update an attachment collection by deleting and inserting again with new values.
      *
-     * @param array $newAttachmentsArray
-     * @param string $collectionName
      *
      * @return Collection<Attachment>
      *
@@ -115,8 +113,7 @@ interface HasAttachments
     /**
      * Remove all attachments in the given collection except some.
      *
-     * @param string $collectionName
-     * @param array<Attachment>|Collection<Attachment> $excludedAttachments
+     * @param  array<Attachment>|Collection<Attachment>  $excludedAttachments
      */
     public function clearAttachmentCollectionExcept(string $collectionName = 'default', array|Collection|Attachment $excludedAttachments = []): self;
 
@@ -131,7 +128,6 @@ interface HasAttachments
     /**
      * Cache the attachments on the object.
      *
-     * @param string $collectionName
      *
      * @return Collection<Attachment>
      */
@@ -139,23 +135,18 @@ interface HasAttachments
 
     /**
      * Prepare to attach
-     *
-     * @param Attachment $attachment
-     * @param MediaAdder $mediaAdder
      */
     public function prepareToAttachAttachments(Attachment $attachment, MediaAdder $mediaAdder);
 
     /**
      * Process unattached attachments
-     *
-     * @param callable $callable
      */
     public function processUnattachedAttachments(callable $callable);
 
     /*
      * Add a conversion.
      */
-    public function addAttachmentConversion(string $name): Conversion;
+    public function addAttachmentConversion(string $name): AttachmentConversion;
 
     /*
      * Register the attachment conversions.
@@ -175,9 +166,7 @@ interface HasAttachments
     /**
      * Updates the attachment collection with given media from request
      *
-     * @param $collection
-     * @param Request $request
-     * @param string $key the attachment field in the request
+     * @param  string  $key  the attachment field in the request
      * @return mixed
      */
     public function updateSingleAttachment($collection, Request $request, string $key = '');
@@ -185,7 +174,6 @@ interface HasAttachments
     /**
      * With attachments scope
      *
-     * @param $query
      * @return mixed
      */
     public function scopeWithAttachments(Builder $query);

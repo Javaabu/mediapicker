@@ -1,0 +1,1 @@
+function e(e){document.readyState===`loading`?document.addEventListener(`DOMContentLoaded`,e,{once:!0}):e()}function t(e){let t=!1,n=new MutationObserver(()=>{t||(t=!0,queueMicrotask(()=>{t=!1,e()}))});return n.observe(document.body,{childList:!0,subtree:!0}),n}export{t as n,e as t};

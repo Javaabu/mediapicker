@@ -55,14 +55,15 @@ class AttachmentsCleanCommandTest extends TestCase
         $media = $this->getMedia();
 
         $attachment = $model->addAttachment($media)
-                            ->toAttachmentCollection();
+            ->toAttachmentCollection();
 
         $path = $model->getFirstAttachmentPath(conversionName: 'test');
 
-        $this->assertEquals($this->getMediaDirectory($media->getKey() . '/conversions/test-test.jpg'), $path);
+        $this->assertStringContainsString('/conversions/attachments/test-test-', $path);
         $this->assertFileExists($path);
 
-        $new_path = $this->getMediaDirectory($media->getKey() . '/conversions/test-test2.jpg');
+        $new_path = $this->getMediaDirectory($media->getKey() . '/conversions/attachments/test-test-0123456789.jpg');
+        $spatie_conversion = $this->getMediaDirectory($media->getKey() . '/conversions/test-mediapicker-thumb.jpg');
         File::copy($path, $new_path);
 
         $this->assertFileExists($new_path);
@@ -80,5 +81,6 @@ class AttachmentsCleanCommandTest extends TestCase
 
         $this->assertFileExists($path);
         $this->assertFileDoesNotExist($new_path);
+        $this->assertFileExists($spatie_conversion);
     }
 }

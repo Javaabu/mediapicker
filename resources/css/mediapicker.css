@@ -1,0 +1,481 @@
+/*
+ * javaabu/mediapicker: the picker dialog (.mp-dialog), the Blade picker field (.mp-field),
+ * the cropper (.mp-cropper) and the editor blocks' rendered markup (.mp-block-*).
+ * Colours, radius and fonts come from Onu's tokens when the page has them, with plain
+ * fallbacks otherwise. Only logical properties, so everything mirrors in RTL.
+ */
+
+:where(.mp-dialog, .mp-field, .mp-cropper, .mp-library, .mp-block) {
+  --mp-background: var(--onu-background, #fff);
+  --mp-foreground: var(--onu-foreground, #1f2937);
+  --mp-muted: var(--onu-neutral-muted, #f9fafb);
+  --mp-muted-foreground: var(--onu-neutral-muted-foreground, #6b7280);
+  --mp-accent: var(--onu-neutral-accent, #f3f4f6);
+  --mp-border: var(--onu-neutral-input, #d1d5db);
+  --mp-border-soft: var(--onu-neutral-border, #e5e7eb);
+  --mp-primary: var(--onu-primary, #4f46e5);
+  --mp-primary-foreground: var(--onu-primary-foreground, #fff);
+  --mp-destructive: var(--onu-destructive, #dc2626);
+  --mp-radius: var(--onu-radius, 0.375rem);
+  /* Latin first, then Thaana: mixed text keeps each script in its own font. */
+  --mp-font: var(--onu-font-sans, ui-sans-serif, system-ui, Faruma, "MV Faseyha", "Noto Sans Thaana", sans-serif);
+}
+
+.mp-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------------ buttons */
+
+.mp-button,
+.mp-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-block-size: 2.25rem;
+  padding-block: 0.375rem;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--mp-border);
+  border-radius: var(--mp-radius);
+  background: var(--mp-background);
+  color: var(--mp-foreground);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.mp-icon-button {
+  padding-inline: 0.5rem;
+  border-color: transparent;
+  background: transparent;
+}
+
+.mp-button:hover,
+.mp-icon-button:hover {
+  background: var(--mp-accent);
+}
+
+.mp-button:focus-visible,
+.mp-icon-button:focus-visible,
+.mp-item:focus-visible,
+.mp-input:focus-visible {
+  outline: 2px solid var(--mp-primary);
+  outline-offset: 2px;
+}
+
+.mp-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mp-button--primary {
+  border-color: var(--mp-primary);
+  background: var(--mp-primary);
+  color: var(--mp-primary-foreground);
+}
+
+.mp-button--primary:hover {
+  background: var(--mp-primary);
+  filter: brightness(0.95);
+}
+
+.mp-button--danger {
+  color: var(--mp-destructive);
+}
+
+.mp-input {
+  min-block-size: 2.25rem;
+  padding-block: 0.375rem;
+  padding-inline: 0.625rem;
+  border: 1px solid var(--mp-border);
+  border-radius: var(--mp-radius);
+  background: var(--mp-background);
+  color: var(--mp-foreground);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+/* ------------------------------------------------------------------ dialog */
+
+.mp-dialog {
+  inline-size: min(64rem, calc(100vw - 2rem));
+  max-block-size: calc(100vh - 2rem);
+  padding: 0;
+  border: 1px solid var(--mp-border-soft);
+  border-radius: calc(var(--mp-radius) * 2);
+  background: var(--mp-background);
+  color: var(--mp-foreground);
+  font-family: var(--mp-font);
+  box-shadow: 0 20px 50px rgb(0 0 0 / 0.2);
+}
+
+.mp-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.mp-dialog::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}
+
+.mp-header,
+.mp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.75rem;
+  padding-inline: 1rem;
+}
+
+.mp-header {
+  border-block-end: 1px solid var(--mp-border-soft);
+}
+
+.mp-footer {
+  border-block-start: 1px solid var(--mp-border-soft);
+}
+
+.mp-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.mp-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-block: 0.75rem;
+  padding-inline: 1rem;
+}
+
+.mp-search {
+  position: relative;
+  display: flex;
+  flex: 1 1 14rem;
+  align-items: center;
+}
+
+.mp-search .mp-icon {
+  position: absolute;
+  inset-inline-start: 0.625rem;
+  color: var(--mp-muted-foreground);
+}
+
+.mp-search .mp-input {
+  inline-size: 100%;
+  padding-inline-start: 2rem;
+}
+
+.mp-file-input {
+  display: none;
+}
+
+.mp-body {
+  flex: 1;
+  overflow: auto;
+  padding-block: 0.25rem 1rem;
+  padding-inline: 1rem;
+}
+
+.mp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: 0.75rem;
+}
+
+.mp-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.375rem;
+  border: 2px solid transparent;
+  border-radius: calc(var(--mp-radius) * 1.5);
+  background: var(--mp-muted);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.mp-item[aria-pressed="true"] {
+  border-color: var(--mp-primary);
+}
+
+.mp-thumb {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--mp-radius);
+  background: var(--mp-accent);
+  object-fit: cover;
+}
+
+.mp-thumb--icon {
+  display: grid;
+  place-items: center;
+  color: var(--mp-muted-foreground);
+}
+
+.mp-thumb--icon .mp-icon {
+  inline-size: 2rem;
+  block-size: 2rem;
+}
+
+.mp-name {
+  overflow: hidden;
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-check {
+  position: absolute;
+  inset-block-start: 0.625rem;
+  inset-inline-end: 0.625rem;
+  display: none;
+  padding: 0.125rem;
+  border-radius: 999px;
+  background: var(--mp-primary);
+  color: var(--mp-primary-foreground);
+}
+
+.mp-item[aria-pressed="true"] .mp-check {
+  display: flex;
+}
+
+.mp-more {
+  display: flex;
+  margin-block-start: 1rem;
+  margin-inline: auto;
+}
+
+.mp-empty,
+.mp-status {
+  margin: 0;
+  color: var(--mp-muted-foreground);
+  font-size: 0.875rem;
+}
+
+.mp-empty {
+  grid-column: 1 / -1;
+  padding-block: 2rem;
+  text-align: center;
+}
+
+.mp-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.mp-error {
+  margin-block: 0 0.75rem;
+  margin-inline: 1rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  border-radius: var(--mp-radius);
+  background: color-mix(in srgb, var(--mp-destructive) 10%, transparent);
+  color: var(--mp-destructive);
+  font-size: 0.875rem;
+}
+
+.mp-uploads {
+  display: grid;
+  gap: 0.375rem;
+  margin: 0;
+  padding-block: 0;
+  padding-inline: 1rem;
+  list-style: none;
+}
+
+.mp-uploads:empty {
+  display: none;
+}
+
+.mp-upload {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.mp-upload span {
+  overflow: hidden;
+  flex: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-progress {
+  inline-size: 8rem;
+}
+
+/* ------------------------------------------------------------------ field */
+
+.mp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mp-field__items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mp-field__items:empty {
+  display: none;
+}
+
+.mp-field__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.375rem;
+  border: 1px solid var(--mp-border-soft);
+  border-radius: var(--mp-radius);
+  background: var(--mp-muted);
+}
+
+.mp-field__item-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.125rem;
+}
+
+.mp-field__item-actions .mp-icon-button {
+  min-block-size: 1.75rem;
+  padding-inline: 0.25rem;
+}
+
+.mp-field__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.mp-field__empty {
+  margin: 0;
+  color: var(--mp-muted-foreground);
+  font-size: 0.875rem;
+}
+
+/* ------------------------------------------------------------------ cropper */
+
+.mp-cropper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mp-cropper__stage {
+  max-block-size: 28rem;
+  overflow: hidden;
+  border-radius: var(--mp-radius);
+  background: var(--mp-accent);
+}
+
+.mp-cropper__stage img {
+  display: block;
+  max-inline-size: 100%;
+}
+
+.mp-cropper__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.mp-cropper__presets [aria-pressed="true"] {
+  border-color: var(--mp-primary);
+  color: var(--mp-primary);
+}
+
+.mp-cropper__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ------------------------------------------------------------------ blocks (rendered content) */
+
+.mp-block-image,
+.mp-block-video {
+  margin-block: 1rem;
+  margin-inline: 0;
+}
+
+.mp-block-image img,
+.mp-block-video video {
+  display: block;
+  max-inline-size: 100%;
+  block-size: auto;
+  border-radius: var(--mp-radius, 0.375rem);
+}
+
+.mp-block-image figcaption,
+.mp-block-gallery figcaption,
+.mp-block-video figcaption {
+  margin-block-start: 0.5rem;
+  color: var(--mp-muted-foreground, #6b7280);
+  font-size: 0.875rem;
+}
+
+.mp-block-gallery {
+  margin-block: 1rem;
+  margin-inline: 0;
+}
+
+.mp-block-gallery ul {
+  display: grid;
+  grid-template-columns: repeat(var(--mp-gallery-columns, 3), minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mp-block-gallery img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--mp-radius, 0.375rem);
+  object-fit: cover;
+}
+
+@media (max-width: 40rem) {
+  .mp-block-gallery ul {
+    grid-template-columns: repeat(min(var(--mp-gallery-columns, 3), 2), minmax(0, 1fr));
+  }
+}
+
+.mp-block-file {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-block: 1rem;
+  padding-block: 0.75rem;
+  padding-inline: 1rem;
+  border: 1px solid var(--mp-border-soft, #e5e7eb);
+  border-radius: var(--mp-radius, 0.375rem);
+}
+
+.mp-block-file a {
+  font-weight: 600;
+}
+
+.mp-block-file small {
+  color: var(--mp-muted-foreground, #6b7280);
+}

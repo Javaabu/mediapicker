@@ -1,0 +1,19 @@
+<?php
+
+namespace Javaabu\Mediapicker\Tests\TestSupport\Factories;
+
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Javaabu\Mediapicker\Tests\TestSupport\Models\Admin;
+
+class AdminFactory extends Factory
+{
+    protected $model = Admin::class;
+
+    public function definition(): array
+    {
+        return [
+            'name' => fake()->name,
+            'email' => fake()->unique()->safeEmail,
+        ];
+    }
+}
